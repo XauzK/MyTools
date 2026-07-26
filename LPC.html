@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LPC Generator Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #e9ecef; display: flex; height: 100vh; }
+        
+        /* Layout Split */
+        .left-panel { width: 50%; padding: 25px; overflow-y: auto; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 10; }
+        .right-panel { width: 50%; padding: 20px; overflow-y: auto; background: #525659; }
+
+        /* Form Styling */
+        h2 { margin-top: 0; color: #2c3e50; font-size: 20px; }
+        h3 { color: #34495e; border-bottom: 2px solid #ddd; padding-bottom: 5px; font-size: 15px; margin-top: 20px; margin-bottom: 12px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 5px; font-size: 12px; color: #333; }
+        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        
+        /* Buttons */
+        .button-group { display: flex; gap: 10px; margin-top: 25px; margin-bottom: 20px;}
+        .btn { flex: 1; padding: 12px 5px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; border-radius: 4px; color: white; transition: 0.2s; text-align: center;}
+        .btn-print { background: #28a745; }
+        .btn-print:hover { background: #218838; }
+        .btn-print-back { background: #17a2b8; }
+        .btn-print-back:hover { background: #138496; }
+        .btn-pdf { background: #d9534f; }
+        .btn-pdf:hover { background: #c9302c; }
+
+        /* A4 Preview Styling */
+        #preview-container { 
+            background: white; 
+            padding: 25px 30px; 
+            width: 100%; 
+            max-width: 750px; 
+            margin: 0 auto; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+            font-size: 12px; 
+            line-height: 1.3; 
+            color: #000; 
+        }
+        
+        .lpc-header { text-align: center; margin-bottom: 15px; }
+        .lpc-header h1 { margin: 0; font-size: 16px; font-weight: bold; }
+        .title-underline { border-bottom: 1px solid #000; padding-bottom: 2px; display: inline-block; }
+        .lpc-header p { margin: 5px 0; font-size: 11px; }
+        
+        .lpc-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .lpc-table th, .lpc-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+        .lpc-table th { background-color: #f9f9f9; text-align: center; }
+        
+        .no-border-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .no-border-table td { padding: 3px; vertical-align: top; }
+        
+        .right-align { text-align: right !important; }
+        .left-align { text-align: left !important; }
+        .center-align { text-align: center !important; }
+        .bold { font-weight: bold; }
+        .gap-row { height: 15px; } 
+        /* Sign-na space tih len nan height hi 80px ah ka dah a, hnuai lamah gap-row ka belh bawk */
+        .signature-row { height: 80px; vertical-align: bottom !important; }
+        .nowrap { white-space: nowrap; }
+
+        /* Dynamic Blank Lines for Inputs */
+        .blank-line {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 150px;
+            min-height: 14px;
+            padding: 0 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .blank-line-long { min-width: 250px; }
+
+        /* Backside Container */
+        #backside-container { display: none; }
+
+        /* Print Media Query */
+        @media print {
+            body { display: block; overflow: auto; background: white; height: auto; }
+            .left-panel { display: none !important; }
+            .right-panel { width: 100%; padding: 0; background: white; display: block; overflow: visible; }
+            @page { size: A4; margin: 10mm; } 
+
+            body.print-front #preview-container { display: block !important; box-shadow: none; padding: 0; max-width: 100%; margin: 0; }
+            body.print-front #backside-container { display: none !important; }
+
+            body.print-back #preview-container { display: none !important; }
+            body.print-back #backside-container { display: block !important; text-align: center; width: 100%; height: 100%; }
+            body.print-back #backside-container img { width: 100%; max-height: 1000px; object-fit: contain; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="left-panel">
+        <h2>LPC Data Entry</h2>
+        
+        <h3>1. Employee Details</h3>
+        <div class="grid">
+            <div class="form-group"><label>Name</label><input type="text" id="name" oninput="calculate()"></div>
+            <div class="form-group"><label>Designation</label><input type="text" id="designation" oninput="calculate()"></div>
+            <div class="form-group"><label>Audit No</label><input type="text" id="auditNo" placeholder="For MO/SMO/CMO/NS" oninput="calculate()"></div>
+            <div class="form-group">
+                <label>Paid Upto (Month)</label>
+                <select id="month" onchange="calculate()">
+                    <option value="January">January</option><option value="February">February</option>
+                    <option value="March">March</option><option value="April">April</option>
+                    <option value="May">May</option><option value="June" selected>June</option>
+                    <option value="July">July</option><option value="August">August</option>
+                    <option value="September">September</option><option value="October">October</option>
+                    <option value="November">November</option><option value="December">December</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Paid Upto (Year)</label><input type="number" id="year" value="2026" oninput="calculate()"></div>
+            <div class="form-group"><label>Level</label><input type="text" id="level" value="6" oninput="calculate()"></div>
+            <div class="form-group"><label>Basic Pay</label><input type="number" id="basicPay" value="46200" oninput="calculate()"></div>
+            <div class="form-group"><label>Pay Head</label><input type="text" id="payHeadInput" placeholder="Enter Pay Head" oninput="calculate()"></div>
+        </div>
+
+        <h3>2. Settings & Allowances</h3>
+        <div class="grid">
+            <div class="form-group">
+                <label>Is a Doctor? (For NPA)</label>
+                <select id="isDoc" onchange="calculate()">
+                    <option value="No">Normal (No NPA)</option>
+                    <option value="Yes">Doctor (20% NPA)</option>
+                </select>
+            </div>
+            <div class="form-group"><label>DA Percentage (%)</label><input type="number" id="daPerc" value="46" oninput="calculate()"></div>
+            <div class="form-group">
+                <label>HRA Eligible?</label>
+                <select id="hraEligible" onchange="calculate()">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group"><label>HRA Percentage (%)</label><input type="number" id="hraPerc" value="9" oninput="calculate()"></div>
+            <div class="form-group"><label>SCA (Manual)</label><input type="number" id="sca" value="2700" oninput="calculate()"></div>
+            <div class="form-group"><label>PP (Manual)</label><input type="number" id="pp" value="0" oninput="calculate()"></div>
+        </div>
+
+        <h3>3. Deductions</h3>
+        <div class="grid">
+            <div class="form-group">
+                <label>Pension Type</label>
+                <select id="pensionType" onchange="calculate()">
+                    <option value="NPS">NPS (Auto Calculate)</option>
+                    <option value="GPF">GPF (Manual Entry)</option>
+                </select>
+            </div>
+            <div class="form-group"><label>GPF Subscription</label><input type="number" id="gpfSub" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>Impound DA</label><input type="number" id="impoundDa" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>GPF Advance</label><input type="number" id="gpfAdv" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>HBA</label><input type="number" id="hba" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>LIC</label><input type="number" id="lic" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>License Fee</label><input type="number" id="licFee" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>SGEGIS Cont.</label><input type="number" id="sgegis" value="200" oninput="calculate()"></div>
+            <div class="form-group"><label>MUHCS</label><input type="number" id="muhcs" value="700" oninput="calculate()"></div>
+        </div>
+
+        <h3>4. Bank & Additional Details</h3>
+        <div class="grid">
+            <div class="form-group"><label>Bank Account Number</label><input type="text" id="bankAcc" oninput="calculate()"></div>
+            <div class="form-group"><label>Name of Bank</label><input type="text" id="bankName" oninput="calculate()"></div>
+            <div class="form-group"><label>IFSC Code</label><input type="text" id="ifsc" oninput="calculate()"></div>
+            <div class="form-group"><label>Contact No.</label><input type="text" id="contact" oninput="calculate()"></div>
+            <div class="form-group"><label>Date of Increment</label><input type="text" id="incrementDate" oninput="calculate()"></div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-print" onclick="printFront()">🖨️ Print Front</button>
+            <button class="btn btn-print-back" onclick="printBack()">🖨️ Print Back</button>
+            <button class="btn btn-pdf" onclick="generatePDF()">💾 Save as PDF</button>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        
+        <div id="preview-container">
+            <div class="lpc-header">
+                <h1><span class="title-underline">LAST PAY CERTIFICATE</span></h1>
+                <p>"(See rule 11(4) and 80 of Central Government Accounts, Receipts and Payment Rules, 1983)"</p>
+            </div>
+
+            <table class="no-border-table">
+                <tr>
+                    <td width="30%">1. Last Pay Certificate of</td>
+                    <td class="bold"><span id="pName"></span></td>
+                    <td>Desig: <span id="pDesig" class="bold"></span><span id="pAuditDisplay"></span></td>
+                </tr>
+                <tr>
+                    <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;Department of Health & Family Welfare, CMO Aizawl East District.</td>
+                </tr>
+                <tr>
+                    <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;Proceeding on ____________________________________</td>
+                </tr>
+                <tr class="gap-row"><td colspan="3"></td></tr>
+                <tr>
+                    <td>2. He/She has been paid upto:</td>
+                    <td colspan="2" class="bold"><span id="pMonth"></span>, <span id="pYear"></span></td>
+                </tr>
+            </table>
+
+            <table class="lpc-table">
+                <thead>
+                    <tr>
+                        <th width="30%">Entitlement</th>
+                        <th width="20%">Amount</th>
+                        <th width="30%">Deduction</th>
+                        <th width="20%">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Level</td><td id="pLevel"></td><td></td><td></td></tr>
+                    <tr><td>PAY</td><td id="pBasic"></td><td>GPF Subscription</td><td id="pGpfSub"></td></tr>
+                    <tr><td>NPA</td><td id="pNpa"></td><td>Impound DA</td><td id="pImpoundDa"></td></tr>
+                    <tr><td>DA</td><td id="pDa"></td><td>GPF Advance</td><td id="pGpfAdv"></td></tr>
+                    <tr><td>SCA</td><td id="pSca"></td><td>HBA</td><td id="pHba"></td></tr>
+                    <tr><td>HRA</td><td id="pHra"></td><td>LIC</td><td id="pLic"></td></tr>
+                    <tr><td>Washing Allowance</td><td id="pWash"></td><td>License Fee</td><td id="pLicFee"></td></tr>
+                    <tr><td>PP</td><td id="pPp"></td><td>SGEGIS Cont.</td><td id="pSgegis"></td></tr>
+                    <tr><td>Uniform Allowance</td><td id="pUniform"></td><td>MUHCS</td><td id="pMuhcs"></td></tr>
+                    <tr><td>Nursing Allowance</td><td id="pNursing"></td><td>NPS</td><td id="pNps"></td></tr>
+                    <tr class="bold"><td>TOTAL</td><td id="pGross"></td><td>TOTAL DEDUCTION</td><td id="pTotDed"></td></tr>
+                    <tr class="bold"><td colspan="2" style="border:none;"></td><td class="right-align">NET AMOUNT</td><td id="pNet"></td></tr>
+                </tbody>
+            </table>
+
+            <table class="no-border-table">
+                <tr class="gap-row"><td colspan="3"></td></tr>
+                <tr><td colspan="3">His/Her GPF/NPS Account No _________________ is maintained by CCA, A&T.</td></tr>
+                <tr class="gap-row"><td colspan="3"></td></tr>
+                
+                <tr>
+                    <td colspan="3">3. a) His/Her bank Account Number is : <span id="pBankAcc" class="blank-line blank-line-long"></span></td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        &nbsp;&nbsp;&nbsp;&nbsp;b) Name of Bank: <span id="pBankName" class="blank-line"></span> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IFSC Code: <span id="pIfsc" class="blank-line"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;c) Contact No. : <span id="pContact" class="blank-line"></span></td>
+                </tr>
+                <tr>
+                    <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;d) Date of Increment : <span id="pIncrement" class="blank-line"></span></td>
+                </tr>
+
+                <tr class="gap-row"><td colspan="3"></td></tr>
+                <tr><td colspan="3">1. He/She made over charge of the Office / post of _________________________________</td></tr>
+                <tr><td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;on the forenoon/afternoon of ___________________________________</td></tr>
+                <tr><td colspan="3">2. Recoveries are to be made the pay of the Government Servant detailed on the reverse.</td></tr>
+                <tr><td colspan="3">3. He/She is also entitled to joining time for ________________ days.</td></tr>
+                <tr><td colspan="3">4. He/She has been sanctioned leave proceeding joining time for ___________ days.</td></tr>
+                <tr><td colspan="3">5. Details for P.L.I. recovery through Pay Bill.</td></tr>
+                <tr><td colspan="3">6. Details of Income tax recovered up to the date from, the beginning of the current financial year are noted on the reverse.</td></tr>
+                <tr><td colspan="3">7. Service from the period from __________ to ____________ (during his stay in this Office) has been verified. A copy of L.P.C. has been given to the Government Servant.</td></tr>
+                
+                <tr class="gap-row"><td colspan="3"></td></tr>
+                <tr class="gap-row"><td colspan="3"></td></tr>
+                
+                <tr>
+                    <td width="40%" class="left-align bold signature-row nowrap">PAY HEAD: <span id="pPayHead"></span></td>
+                    <td width="20%" class="signature-row"></td>
+                    <td width="40%" class="center-align signature-row nowrap">Signature: _________________<br><br></td>
+                </tr>
+            </table>
+        </div>
+
+        <div id="backside-container">
+            <img src="backside.png" alt="Backside Image">
+        </div>
+
+    </div>
+
+    <script>
+        function val(id) { return parseFloat(document.getElementById(id).value) || 0; }
+        function setPrint(id, value) { document.getElementById(id).innerText = value === 0 ? '' : value; }
+
+        function calculate() {
+            let basic = val('basicPay');
+            let isDoc = document.getElementById('isDoc').value === 'Yes';
+            let daPerc = val('daPerc');
+            let hraEligible = document.getElementById('hraEligible').value === 'Yes';
+            let hraPerc = val('hraPerc');
+            let desig = document.getElementById('designation').value.toLowerCase();
+            let pensionType = document.getElementById('pensionType').value;
+
+            let npa = isDoc ? Math.round(basic * 0.20) : 0;
+            let da = Math.round((basic + npa) * (daPerc / 100)); 
+            let hra = hraEligible ? Math.round(basic * (hraPerc / 100)) : 0; 
+
+            let wash = 0, uniform = 0, nursing = 0;
+            const medicalStaff = ['hw', 'hs', 'no', 'sn', 'health worker', 'health supervisor', 'nursing officer', 'staff nurse'];
+            const groupD = ['group d', 'iv grade', 'grade iv'];
+
+            if (medicalStaff.some(v => desig.includes(v))) {
+                wash = 450; uniform = 750; nursing = 4800;
+            } else if (groupD.some(v => desig.includes(v))) {
+                wash = 90;
+            }
+
+            let sca = val('sca');
+            let pp = val('pp');
+            let grossPay = basic + npa + da + sca + hra + wash + pp + uniform + nursing;
+
+            let gpfSub = 0, nps = 0, impoundDa = 0;
+
+            if (pensionType === 'NPS') {
+                nps = Math.round((basic + da) * 0.10);
+                document.getElementById('gpfSub').disabled = true;
+                
+                document.getElementById('impoundDa').disabled = false;
+                impoundDa = val('impoundDa');
+            } else {
+                gpfSub = val('gpfSub');
+                document.getElementById('gpfSub').disabled = false;
+                
+                // Group D 15% Impound DA Check
+                let impoundRate = groupD.some(v => desig.includes(v)) ? 0.15 : 0.20;
+                impoundDa = Math.round(basic * impoundRate);
+                document.getElementById('impoundDa').value = impoundDa;
+                document.getElementById('impoundDa').disabled = true; 
+            }
+
+            let gpfAdv = val('gpfAdv'), hba = val('hba');
+            let lic = val('lic'), licFee = val('licFee'), sgegis = val('sgegis'), muhcs = val('muhcs');
+
+            let totDed = gpfSub + impoundDa + gpfAdv + hba + lic + licFee + sgegis + muhcs + nps;
+            let netPay = grossPay - totDed;
+
+            // Audit No Display Logic
+            const auditStaff = ['mo', 'medical officer', 'smo', 'cmo', 'ns'];
+            let isAuditStaff = auditStaff.some(v => new RegExp('\\b' + v + '\\b').test(desig));
+            let auditNoVal = document.getElementById('auditNo').value;
+
+            if (isAuditStaff && auditNoVal.trim() !== '') {
+                document.getElementById('pAuditDisplay').innerHTML = ` &nbsp; (Audit No: <span class="bold">${auditNoVal}</span>)`;
+            } else {
+                document.getElementById('pAuditDisplay').innerHTML = '';
+            }
+
+            // Text Inputs
+            document.getElementById('pName').innerText = document.getElementById('name').value;
+            document.getElementById('pDesig').innerText = document.getElementById('designation').value;
+            document.getElementById('pMonth').innerText = document.getElementById('month').value;
+            document.getElementById('pYear').innerText = document.getElementById('year').value;
+            document.getElementById('pLevel').innerText = document.getElementById('level').value;
+            document.getElementById('pPayHead').innerText = document.getElementById('payHeadInput').value;
+
+            // Bank & Additional Details
+            document.getElementById('pBankAcc').innerText = document.getElementById('bankAcc').value;
+            document.getElementById('pBankName').innerText = document.getElementById('bankName').value;
+            document.getElementById('pIfsc').innerText = document.getElementById('ifsc').value;
+            document.getElementById('pContact').innerText = document.getElementById('contact').value;
+            document.getElementById('pIncrement').innerText = document.getElementById('incrementDate').value;
+
+            // Numbers
+            setPrint('pBasic', basic); setPrint('pNpa', npa); setPrint('pDa', da); setPrint('pSca', sca);
+            setPrint('pHra', hra); setPrint('pWash', wash); setPrint('pPp', pp); setPrint('pUniform', uniform);
+            setPrint('pNursing', nursing); setPrint('pGross', grossPay);
+            setPrint('pGpfSub', gpfSub); setPrint('pImpoundDa', impoundDa); setPrint('pGpfAdv', gpfAdv);
+            setPrint('pHba', hba); setPrint('pLic', lic); setPrint('pLicFee', licFee); setPrint('pSgegis', sgegis);
+            setPrint('pMuhcs', muhcs); setPrint('pNps', nps); setPrint('pTotDed', totDed); setPrint('pNet', netPay);
+        }
+
+        // Print Functions
+        function printFront() {
+            document.body.classList.remove('print-back');
+            document.body.classList.add('print-front');
+            window.print();
+        }
+
+        function printBack() {
+            document.body.classList.remove('print-front');
+            document.body.classList.add('print-back');
+            window.print();
+        }
+
+        // PDF Generation
+        function generatePDF() {
+            const element = document.getElementById('preview-container');
+            const empName = document.getElementById('name').value || 'Employee';
+            const opt = {
+                margin:       0.3,
+                filename:     'LPC_' + empName + '.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+        }
+
+        window.onload = calculate;
+    </script>
+</body>
+</html>

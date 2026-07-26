@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPF Sanction Order - Smart Form</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            margin: 0;
+            padding: 30px 20px;
+            color: #333;
+        }
+
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px 60px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-print {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-print:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-2px);
+        }
+
+        input[type="text"], input[type="number"], select {
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: inherit;
+            font-size: inherit;
+            background-color: #f8f9fa;
+            color: #000;
+            outline: none;
+        }
+        
+        .line-input {
+            border: none !important;
+            border-bottom: 1px dashed #000 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            padding: 0 5px !important;
+            text-align: center;
+        }
+
+        .header-input {
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            border: none !important;
+            outline: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+        }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .underline { text-decoration: underline; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        table, th, td {
+            border: 1px solid #dee2e6;
+        }
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .signature-block {
+            margin-top: 25px;
+            display: flex;
+            justify-content: flex-end;
+            text-align: center;
+        }
+        
+        .signature-block p {
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .sign-space {
+            padding-top: 50px;
+        }
+
+        .memo-section {
+            margin-top: 15px;
+            border-top: 1px dashed #dee2e6;
+            padding-top: 15px;
+        }
+        
+        .memo-section ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .inline-group {
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 0; 
+            }
+            body {
+                background: none;
+                padding: 10mm 15mm; 
+                font-family: "Times New Roman", Times, serif;
+                font-size: 14px;
+                line-height: 1.3;
+            }
+            .form-container {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+                max-width: 100%;
+            }
+            .controls, .memo-section::before {
+                display: none;
+            }
+            .memo-section {
+                border-top: none;
+                margin-top: 10px;
+                padding-top: 0;
+            }
+            
+            p { margin-bottom: 5px; margin-top: 5px; }
+            
+            input[type="text"], input[type="number"], select {
+                border: none;
+                border-bottom: 1px dotted #000 !important;
+                border-radius: 0;
+                padding: 0 3px;
+                background: transparent;
+                -webkit-appearance: none;
+                appearance: none;
+                text-align: center;
+            }
+            select {
+                text-align-last: center;
+            }
+            
+            .header-input {
+                border-bottom: none !important;
+            }
+
+            table {
+                margin: 10px 0;
+            }
+            table, th, td {
+                border: 1px solid black;
+            }
+            th, td {
+                padding: 4px 6px;
+            }
+            .signature-block {
+                margin-top: 15px;
+            }
+            .sign-space {
+                padding-top: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button class="btn-print" onclick="window.print()">🖨️ Print / Save to PDF</button>
+    </div>
+
+    <div class="form-container">
+        <div class="text-center">
+            <p style="margin-bottom: 2px; margin-top: 0;">
+                <input type="text" class="header-input" value="No. G.26028/ Adv2/2025 - CMO 'E'">
+            </p>
+            <p class="bold" style="margin-top: 0;">OFFICE OF THE CHIEF MEDICAL OFFICER<br>AIZAWL EAST DISTRICT</p>
+        </div>
+        
+        <div class="text-right">
+            <p>Dated Aizawl the <input type="text" style="width: 130px;"></p>
+        </div>
+
+        <div class="text-center" style="margin-top: 15px; margin-bottom: 15px;">
+            <p class="bold underline" style="margin-bottom: 5px; margin-top:0;">Proforma for sanction of Advance from Provident Funds</p>
+            <p style="margin-top: 0;">ORDER NO <input type="text" style="width: 120px;"> .</p>
+        </div>
+
+        <p style="text-align: justify;">
+            Sanction of the GPF is hereby accorded under Rule 
+            
+            <select id="ruleSelect" style="width: auto; max-width: 150px; font-weight: bold;">
+                <option value="" data-reason="">-- Select Rule --</option>
+                <optgroup label="GPF ADVANCE">
+                    <option value="12 (1) (a)" data-reason="Expense for illness, Travelling Expense for self or relatives">12 (1) (a) - Expense for illness, Travelling Expense for self or relatives</option>
+                    <option value="12 (1) (b)" data-reason="Expense for Education for Self or relatives">12 (1) (b) - Expense for Education for Self or relatives</option>
+                    <option value="12 (1) (c)" data-reason="Marriage/Funeral expense">12 (1) (c) - Marriage/Funeral expense</option>
+                    <option value="12 (1) (f)" data-reason="Purchase of household items">12 (1) (f) - Purchase of household items</option>
+                </optgroup>
+                <optgroup label="GPF WITHDRAWAL">
+                    <!-- HETAH HIAN I DUH DAN IN KA RAWN DAH E -->
+                    <option value="15 (1) (A) (a)" data-reason="Expenditure for children education">15 (1) (A) (a) - Expenditure for children education</option>
+                    
+                    <option value="15 (1) (A) (b)" data-reason="Expense for marriage/daughter or any other female relatives">15 (1) (A) (b) - Expense for marriage/daughter or any other female relatives</option>
+                    <option value="15 (1) (A) (c)" data-reason="Expense for illness for relatives">15 (1) (A) (c) - Expense for illness for relatives</option>
+                    <option value="15 (1) (A) (d)" data-reason="Purchase of household items">15 (1) (A) (d) - Purchase of household items</option>
+                    
+                    <option value="15 (1) (B) (b)" data-reason="For repaying loan taken for building">15 (1) (B) (b) - For repaying loan taken for building</option>
+                    <option value="15 (1) (B) (c)" data-reason="For purchasing house site for building a house">15 (1) (B) (c) - For purchasing house site for building a house</option>
+                    <option value="15 (1) (B) (d)" data-reason="For reconstructing or extension of a house">15 (1) (B) (d) - For reconstructing or extension of a house</option>
+                    <option value="15 (1) (B) (e)" data-reason="For renovating a house">15 (1) (B) (e) - For renovating a house</option>
+                </optgroup>
+            </select>
+            
+            of 1960 for the grant of an advance of 
+            <span class="inline-group"><b>Rs.</b> <input type="number" id="advanceAmount" style="width: 100px;" placeholder="Amount"></span> 
+            only to Shri/Smt. <input type="text" id="empName1" style="width: 180px;" placeholder="Name"> 
+            from his/her gpf Account No. <input type="text" style="width: 110px;" placeholder="Account No."> 
+            to enable her/him to defray expenses on <input type="text" id="reasonInput" style="width: 320px;" placeholder="Reason for expense (Auto-filled)">.
+        </p>
+
+        <p style="text-align: justify;">
+            The Advance will be recovered in <input type="number" id="instalmentCount" style="width: 50px;" placeholder="No."> 
+            monthly instalments of <span class="inline-group"><b>Rs.</b> <input type="text" id="monthlyAmount" style="width: 100px;" readonly placeholder="Auto" style="background-color: #e9ecef;"></span> 
+            each commencing from the salary from the month of <input type="text" style="width: 150px;" placeholder="Month & Year">.
+        </p>
+
+        <p style="text-align: justify;">
+            The balance at the credit of Shri/Smt <input type="text" id="empName2" style="width: 200px;" placeholder="Name (Auto-filled)" readonly style="background-color: #e9ecef;"> 
+            as on <input type="text" style="width: 100px;" placeholder="Date"> is detailed below: -
+        </p>
+
+        <table>
+            <tr>
+                <td style="width: 5%;">i.</td>
+                <td style="width: 65%;">Balance as per account slip for the year </td>
+                <td style="width: 30%;">Rs. <input type="number" id="balanceA" class="line-input" style="width: 70%;"></td>
+            </tr>
+            <tr>
+                <td>ii.</td>
+                <td>Subsequent deposits and refunds of advance - in the rate p.m. <input type="text" class="line-input" style="width: 60px;"> from <input type="text" class="line-input" style="width: 80px;"> to till date</td>
+                <td>Rs. <input type="number" id="balanceB" class="line-input" style="width: 70%;"></td>
+            </tr>
+            <tr>
+                <td>iii.</td>
+                <td>Total of Column i & ii</td>
+                <td>Rs. <input type="number" id="totalBalance" class="line-input" style="width: 70%;" readonly style="background-color: #e9ecef !important; font-weight: bold;"></td>
+            </tr>
+            <tr>
+                <td>iv.</td>
+                <td>Subsequent withdrawals, if any</td>
+                <td>Rs. <input type="number" class="line-input" style="width: 70%;"></td>
+            </tr>
+            <tr>
+                <td>v.</td>
+                <td>Balance as on date of sanction</td>
+                <td>Rs. <input type="number" class="line-input" style="width: 70%;"></td>
+            </tr>
+        </table>
+
+        <div class="signature-block">
+            <div class="sign-space">
+                <p class="bold">(Dr. LALHLUNPUII)</p>
+                <p>Sr. Chief Medical Officer</p>
+                <p>Aizawl East District</p>
+            </div>
+        </div>
+
+        <div class="memo-section">
+            <p>Memo No. G. 26028/ Adv2/2025 - CMO 'E' <span style="float: right;">Dated Aizawl, the <input type="text" style="width: 120px;"></span></p>
+            <p>Copy to:</p>
+            <ol>
+                <li>The Treasury Officer, Aizawl North Treasury for kind information and necessary action.</li>
+                <li>The Director, Accounts & Treasuries for kind information and necessary action.</li>
+                <li>Person Concerned</li>
+                <li>Account section of this office for necessary action.</li>
+            </ol>
+        </div>
+
+        <div class="signature-block">
+            <div class="sign-space">
+                <p class="bold">Sr. Chief Medical Officer</p>
+                <p>Aizawl East District</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const advanceAmtInput = document.getElementById('advanceAmount');
+        const instalmentsInput = document.getElementById('instalmentCount');
+        const monthlyAmtInput = document.getElementById('monthlyAmount');
+
+        function calculateInstalment() {
+            const totalAmount = parseFloat(advanceAmtInput.value);
+            const numberOfInstalments = parseFloat(instalmentsInput.value);
+
+            if (!isNaN(totalAmount) && !isNaN(numberOfInstalments) && numberOfInstalments > 0) {
+                const monthly = totalAmount / numberOfInstalments;
+                monthlyAmtInput.value = Number.isInteger(monthly) ? monthly : Math.round(monthly);
+            } else {
+                monthlyAmtInput.value = '';
+            }
+        }
+
+        advanceAmtInput.addEventListener('input', calculateInstalment);
+        instalmentsInput.addEventListener('input', calculateInstalment);
+
+        const ruleSelect = document.getElementById('ruleSelect');
+        const reasonInput = document.getElementById('reasonInput');
+
+        Array.from(ruleSelect.options).forEach(opt => {
+            if(opt.value !== "") {
+                opt.dataset.full = opt.text; 
+                opt.dataset.short = opt.value; 
+            }
+        });
+
+        ruleSelect.addEventListener('focus', function() {
+            Array.from(this.options).forEach(opt => {
+                if(opt.value !== "") {
+                    opt.text = opt.dataset.full;
+                }
+            });
+        });
+
+        function shrinkRuleText() {
+            const selectedOpt = ruleSelect.options[ruleSelect.selectedIndex];
+            if (selectedOpt.value) {
+                selectedOpt.text = selectedOpt.dataset.short; 
+            }
+        }
+
+        ruleSelect.addEventListener('change', function() {
+            const selectedOpt = this.options[this.selectedIndex];
+            
+            if (selectedOpt.value) {
+                reasonInput.value = selectedOpt.dataset.reason;
+            } else {
+                reasonInput.value = '';
+            }
+            
+            shrinkRuleText();
+            this.blur(); 
+        });
+
+        ruleSelect.addEventListener('blur', shrinkRuleText);
+
+        const empName1 = document.getElementById('empName1');
+        const empName2 = document.getElementById('empName2');
+
+        empName1.addEventListener('input', function() {
+            empName2.value = this.value;
+        });
+
+        const balanceA = document.getElementById('balanceA');
+        const balanceB = document.getElementById('balanceB');
+        const totalBalance = document.getElementById('totalBalance');
+
+        function calculateTotalBalance() {
+            const valA = parseFloat(balanceA.value) || 0;
+            const valB = parseFloat(balanceB.value) || 0;
+            
+            if (balanceA.value !== '' || balanceB.value !== '') {
+                totalBalance.value = valA + valB;
+            } else {
+                totalBalance.value = '';
+            }
+        }
+
+        balanceA.addEventListener('input', calculateTotalBalance);
+        balanceB.addEventListener('input', calculateTotalBalance);
+    </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Broken Salary Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;900&family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0A0E1A;
+      display: flex;
+      flex-direction: column;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* Navbar Styles */
+    nav.top-nav {
+      position: sticky; top: 0; z-index: 1000;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 5%;
+      background: rgba(10, 14, 26, 0.55);
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+      border-bottom: 1px solid rgba(245, 241, 230, 0.14);
+      font-family: 'Inter', sans-serif;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
+    .nav-logo .mark {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(160deg, #4FD1C5, #6C8EBF);
+      color: #08111a; font-weight: 900; font-family: 'Fraunces', serif; font-size: 1.05rem;
+    }
+    .nav-logo .logo-text { color: #f5f1e6; font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.2rem; display: flex; flex-direction: column; line-height: 1; }
+    .nav-logo .sub { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 0.6rem; letter-spacing: 2px; color: #93a0b8; text-transform: uppercase; margin-top: 2px; }
+    .nav-links { display: flex; gap: 0.3rem; }
+    .nav-links a { text-decoration: none; color: #93a0b8; font-size: 0.9rem; font-weight: 500; padding: 0.55rem 1rem; border-radius: 10px; transition: all 0.3s; }
+    .nav-links a:hover, .nav-links a.active { background: rgba(245, 241, 230, 0.09); color: #f5f1e6; }
+
+    .main-content {
+      display: flex;
+      justify-content: center;
+      padding: 40px 24px;
+      flex: 1;
+    }
+
+    .card {
+      background: rgba(245, 241, 230, 0.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(245, 241, 230, 0.08);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .title { font-family: 'Playfair Display', serif; font-size: 28px; color: #f0e6d3; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .subtitle { font-size: 10px; color: #93A0B8; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 36px; }
+    .label { display: block; font-size: 10px; color: #93A0B8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+
+    .reason-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 28px; }
+    .reason-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 14px; cursor: pointer; text-align: left; transition: all 0.2s; }
+    .reason-btn:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); }
+    .reason-btn.active { border-color: var(--rc); background: color-mix(in srgb, var(--rc) 15%, transparent); }
+    .reason-icon { font-size: 15px; margin-bottom: 5px; display: block; color: var(--rc); }
+    .reason-label { font-size: 11px; color: #93A0B8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .reason-btn.active .reason-label { color: #f0e6d3; }
+
+    .input-wrap { position: relative; margin-bottom: 28px; }
+    .input-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #93A0B8; pointer-events: none; }
+    .input-field { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px 16px 14px 42px; font-family: 'DM Mono', monospace; font-size: 15px; color: #f0e6d3; outline: none; transition: border-color 0.2s; }
+    .input-field:focus { border-color: #4FD1C5; }
+    .input-field::placeholder { color: #555; }
+
+    .date-btn { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px 16px; font-family: 'DM Mono', monospace; font-size: 13px; color: #93A0B8; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s; margin-bottom: 28px; }
+    .date-btn:hover { border-color: #4FD1C5; }
+    .date-btn.has-date { color: #f0e6d3; }
+
+    .calc-btn { width: 100%; background: linear-gradient(160deg, #4FD1C5, #6C8EBF); border: none; border-radius: 10px; padding: 16px; font-family: 'Playfair Display', serif; font-size: 16px; color: #08111a; cursor: pointer; font-weight: 700; transition: all 0.2s; }
+    .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(79, 209, 197, 0.3); }
+    .calc-btn:disabled { background: rgba(255,255,255,0.1); color: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .result-box { margin-top: 28px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; animation: slideUp 0.4s ease; display: none; }
+    .result-box.show { display: block; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .result-header { padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .result-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 20px; }
+    .result-period { font-size: 11px; color: #93A0B8; }
+    .result-rows { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .result-row { display: flex; justify-content: space-between; align-items: center; }
+    .result-key { font-size: 11px; color: #93A0B8; text-transform: uppercase; letter-spacing: 1px; }
+    .result-val { font-size: 13px; color: #f0e6d3; }
+    .result-val.highlight { font-weight: 500; }
+    .result-val.strikethrough { text-decoration: line-through; color: #777; }
+    .result-total { padding: 20px; display: flex; justify-content: space-between; align-items: baseline; }
+    .result-total-label { font-family: 'Playfair Display', serif; font-size: 14px; color: #93A0B8; }
+    .result-total-val { font-family: 'Playfair Display', serif; font-size: 30px; color: #4FD1C5; font-weight: 700; letter-spacing: -1px; }
+
+    .cal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 1100; backdrop-filter: blur(5px); }
+    .cal-overlay.open { display: flex; }
+    .cal-box { background: #111828; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; width: 300px; }
+    .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .cal-nav { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #f0e6d3; border-radius: 6px; width: 30px; height: 30px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .cal-nav:hover { background: rgba(255,255,255,0.1); }
+    .cal-month-label { font-family: 'Playfair Display', serif; font-size: 16px; color: #4FD1C5; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-dow { font-size: 9px; color: #93A0B8; text-align: center; padding: 4px 0 8px; text-transform: uppercase; }
+    .cal-day { font-size: 12px; color: #f0e6d3; text-align: center; padding: 8px 4px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .cal-day:hover { background: rgba(255,255,255,0.1); }
+    .cal-day.empty { cursor: default; pointer-events: none; }
+    .cal-day.selected { background: #4FD1C5; color: #08111a; font-weight: bold; }
+    .cal-day.today { border: 1px solid rgba(255,255,255,0.3); }
+    .year-input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; justify-content: center; }
+    .year-input { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; font-family: 'DM Mono', monospace; font-size: 13px; color: #f0e6d3; width: 70px; text-align: center; outline: none; }
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="index.html" class="nav-logo">
+    <span class="mark">X</span>
+    <span class="logo-text">Xauz <span class="sub">Office Tools</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="broken.html" class="active">Broken Salary</a>
+    <a href="gpf.html">GPF</a>
+    <a href="head.html">Accounts</a>
+    <a href="qr.html">QR Maker</a>
+  </div>
+</nav>
+
+<div class="main-content">
+  <div class="card">
+    <h1 class="title">Broken Salary</h1>
+    <p class="subtitle">Pro-rated Pay Calculator</p>
+
+    <span class="label">Reason for broken salary</span>
+    <div class="reason-grid" id="reasonGrid">
+      <button class="reason-btn active" data-reason="transfer_in" style="--rc:#4FD1C5" onclick="selectReason(this)">
+        <span class="reason-icon">→</span>
+        <span class="reason-label">Transfer In</span>
+      </button>
+      <button class="reason-btn" data-reason="transfer_out" style="--rc:#E2725B" onclick="selectReason(this)">
+        <span class="reason-icon">←</span>
+        <span class="reason-label">Transfer Out</span>
+      </button>
+      <button class="reason-btn" data-reason="resign" style="--rc:#C9A227" onclick="selectReason(this)">
+        <span class="reason-icon">✕</span>
+        <span class="reason-label">Resignation</span>
+      </button>
+      <button class="reason-btn" data-reason="new_hire" style="--rc:#6C8EBF" onclick="selectReason(this)">
+        <span class="reason-icon">★</span>
+        <span class="reason-label">New Hire</span>
+      </button>
+      <button class="reason-btn" data-reason="termination" style="--rc:#9B7EDE" onclick="selectReason(this)">
+        <span class="reason-icon">⊘</span>
+        <span class="reason-label">Termination</span>
+      </button>
+    </div>
+
+    <span class="label">Full monthly salary (INR)</span>
+    <div class="input-wrap">
+      <span class="input-prefix">₹</span>
+      <input class="input-field" id="salaryInput" type="number" min="0" placeholder="e.g. 50000" oninput="resetResult()" />
+    </div>
+
+    <span class="label" id="dateLabel">Date joined / transferred in</span>
+    <button class="date-btn" id="dateBtn" onclick="openCalendar()">
+      <span id="dateBtnText">Select a date…</span>
+      <span style="font-size:16px; color:#93A0B8;">📅</span>
+    </button>
+
+    <button class="calc-btn" id="calcBtn" onclick="calculate()" disabled>Calculate Payable Salary</button>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-header">
+        <span class="result-tag" id="resultTag"></span>
+        <span class="result-period" id="resultPeriod"></span>
+      </div>
+      <div class="result-rows">
+        <div class="result-row">
+          <span class="result-key">Days in month</span>
+          <span class="result-val" id="rDaysInMonth">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Daily rate</span>
+          <span class="result-val" id="rDailyRate">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key" id="rWorkedLabel">Days worked</span>
+          <span class="result-val highlight" id="rWorkedDays">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Full monthly salary</span>
+          <span class="result-val strikethrough" id="rFullSalary">—</span>
+        </div>
+      </div>
+      <div class="result-total">
+        <span class="result-total-label">Payable this month</span>
+        <span class="result-total-val" id="rPayable">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cal-overlay" id="calOverlay" onclick="closeCalendar(event)">
+  <div class="cal-box">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="changeMonth(-1)">&#8249;</button>
+      <span class="cal-month-label" id="calMonthLabel"></span>
+      <button class="cal-nav" onclick="changeMonth(1)">&#8250;</button>
+    </div>
+    <div class="year-input-row">
+      <span style="font-size:10px;color:#93A0B8;text-transform:uppercase;letter-spacing:1px;">Year</span>
+      <input class="year-input" id="yearInput" type="number" onchange="changeYear(this.value)" />
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+</div>
+
+<script>
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const REASONS = {
+    transfer_in:  { label: "Transfer In",  icon: "→", color: "#4FD1C5" },
+    transfer_out: { label: "Transfer Out", icon: "←", color: "#E2725B" },
+    resign:       { label: "Resignation",  icon: "✕", color: "#C9A227" },
+    new_hire:     { label: "New Hire",     icon: "★", color: "#6C8EBF" },
+    termination:  { label: "Termination",  icon: "⊘", color: "#9B7EDE" },
+  };
+
+  let selectedReason = "transfer_in";
+  let selectedDate = null;
+  const today = new Date();
+  let calYear = today.getFullYear();
+  let calMonth = today.getMonth();
+
+  function selectReason(btn) {
+    document.querySelectorAll(".reason-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    selectedReason = btn.dataset.reason;
+    const joinTypes = ["transfer_in", "new_hire"];
+    document.getElementById("dateLabel").textContent = joinTypes.includes(selectedReason) ? "Date joined / transferred in" : "Last working day";
+    resetResult(); checkCalcBtn();
+  }
+
+  function formatINR(val) { return "₹" + val.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function getDaysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+  function openCalendar() {
+    document.getElementById("calOverlay").classList.add("open");
+    document.getElementById("yearInput").value = calYear;
+    renderCalendar();
+  }
+
+  function closeCalendar(e) { if (e.target === document.getElementById("calOverlay")) document.getElementById("calOverlay").classList.remove("open"); }
+
+  function changeMonth(dir) {
+    calMonth += dir;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    document.getElementById("yearInput").value = calYear;
+    renderCalendar();
+  }
+
+  function changeYear(val) { const y = parseInt(val); if (!isNaN(y) && y > 1900 && y < 2200) { calYear = y; renderCalendar(); } }
+
+  function renderCalendar() {
+    document.getElementById("calMonthLabel").textContent = MONTHS[calMonth] + " " + calYear;
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const days = getDaysInMonth(calYear, calMonth);
+    const grid = document.getElementById("calGrid");
+    grid.innerHTML = "";
+
+    ["Su","Mo","Tu","We","Th","Fr","Sa"].forEach(d => {
+      const el = document.createElement("div"); el.className = "cal-dow"; el.textContent = d; grid.appendChild(el);
+    });
+
+    for (let i = 0; i < firstDay; i++) {
+      const el = document.createElement("div"); el.className = "cal-day empty"; grid.appendChild(el);
+    }
+
+    for (let d = 1; d <= days; d++) {
+      const el = document.createElement("div");
+      el.className = "cal-day"; el.textContent = d;
+      const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+      if (isToday) el.classList.add("today");
+      if (selectedDate && selectedDate.getDate() === d && selectedDate.getMonth() === calMonth && selectedDate.getFullYear() === calYear) el.classList.add("selected");
+      el.onclick = () => pickDay(d);
+      grid.appendChild(el);
+    }
+  }
+
+  function pickDay(d) {
+    selectedDate = new Date(calYear, calMonth, d);
+    const btn = document.getElementById("dateBtn");
+    const dd = String(d).padStart(2,"0");
+    document.getElementById("dateBtnText").textContent = `${dd} ${MONTHS[calMonth]} ${calYear}`;
+    btn.classList.add("has-date");
+    document.getElementById("calOverlay").classList.remove("open");
+    resetResult(); checkCalcBtn();
+  }
+
+  function checkCalcBtn() {
+    const sal = parseFloat(document.getElementById("salaryInput").value);
+    const ready = selectedDate && !isNaN(sal) && sal > 0;
+    document.getElementById("calcBtn").disabled = !ready;
+  }
+
+  function resetResult() { document.getElementById("resultBox").classList.remove("show"); checkCalcBtn(); }
+
+  function calculate() {
+    const sal = parseFloat(document.getElementById("salaryInput").value);
+    if (!selectedDate || isNaN(sal) || sal <= 0) return;
+
+    const y = selectedDate.getFullYear();
+    const m = selectedDate.getMonth();
+    const d = selectedDate.getDate();
+    const totalDays = getDaysInMonth(y, m);
+    const dailyRate = sal / totalDays;
+
+    const joinTypes = ["transfer_in", "new_hire"];
+    let workedDays, rangeStr;
+
+    if (joinTypes.includes(selectedReason)) {
+      workedDays = totalDays - d + 1; rangeStr = `${d}–${totalDays} ${MONTHS[m]}`;
+    } else {
+      workedDays = d; rangeStr = `1–${d} ${MONTHS[m]}`;
+    }
+
+    const payable = dailyRate * workedDays;
+    const r = REASONS[selectedReason];
+
+    document.getElementById("resultTag").textContent = `${r.icon} ${r.label}`;
+    document.getElementById("resultTag").style.cssText = `background: color-mix(in srgb, ${r.color} 15%, transparent); color: ${r.color}; border: 1px solid color-mix(in srgb, ${r.color} 30%, transparent);`;
+    document.getElementById("resultPeriod").textContent = `${MONTHS[m]} ${y}`;
+    document.getElementById("rDaysInMonth").textContent = `${totalDays} days`;
+    document.getElementById("rDailyRate").textContent = `${formatINR(dailyRate)} / day`;
+    document.getElementById("rWorkedLabel").textContent = joinTypes.includes(selectedReason) ? "Days from joining" : "Days worked";
+    document.getElementById("rWorkedDays").textContent = `${workedDays} days`;
+    document.getElementById("rWorkedDays").style.color = r.color;
+    document.getElementById("rWorkedDays").title = rangeStr;
+    document.getElementById("rFullSalary").textContent = formatINR(sal);
+    document.getElementById("rPayable").textContent = formatINR(payable);
+
+    const box = document.getElementById("resultBox");
+    box.classList.remove("show"); void box.offsetWidth; box.classList.add("show");
+  }
+
+  document.getElementById("salaryInput").addEventListener("input", checkCalcBtn);
+</script>
+</body>
+</html>

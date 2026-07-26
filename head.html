@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Head of Account Tracker - Glass Theme</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --glow-color: #38bdf8;
+            --glow-secondary: #a855f7;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0A0E1A; /* Matched to main theme */
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Navbar Styles */
+        nav.top-nav {
+            position: sticky; top: 0; z-index: 1000; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 5%; box-sizing: border-box;
+            background: rgba(10, 14, 26, 0.55);
+            backdrop-filter: blur(22px) saturate(140%);
+            -webkit-backdrop-filter: blur(22px) saturate(140%);
+            border-bottom: 1px solid rgba(245, 241, 230, 0.14);
+        }
+        .nav-logo { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
+        .nav-logo .mark {
+            width: 34px; height: 34px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(160deg, #4FD1C5, #6C8EBF);
+            color: #08111a; font-weight: 900; font-family: 'Fraunces', serif; font-size: 1.05rem;
+        }
+        .nav-logo .logo-text { color: #f5f1e6; font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.2rem; display: flex; flex-direction: column; line-height: 1; }
+        .nav-logo .sub { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 0.6rem; letter-spacing: 2px; color: #93a0b8; text-transform: uppercase; margin-top: 2px; }
+        .nav-links { display: flex; gap: 0.3rem; }
+        .nav-links a { text-decoration: none; color: #93a0b8; font-size: 0.9rem; font-weight: 500; padding: 0.55rem 1rem; border-radius: 10px; transition: all 0.3s; }
+        .nav-links a:hover, .nav-links a.active { background: rgba(245, 241, 230, 0.09); color: #f5f1e6; }
+
+        /* Background Glowing Shapes */
+        .bg-shape { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -1; }
+        .shape-1 { top: 10%; left: -100px; width: 500px; height: 500px; background: rgba(79, 209, 197, 0.15); }
+        .shape-2 { bottom: -150px; right: -100px; width: 600px; height: 600px; background: rgba(108, 142, 191, 0.15); }
+
+        .search-container {
+            background: rgba(245, 241, 230, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            width: 90%;
+            max-width: 800px;
+            padding: 35px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            margin-top: 40px;
+            margin-bottom: 40px;
+            box-sizing: border-box;
+        }
+
+        h2 { margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 400; letter-spacing: 1px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 30px; text-shadow: 0 0 15px rgba(255, 255, 255, 0.3); display: flex; align-items: center; gap: 10px; }
+        .search-box { position: relative; margin-bottom: 30px; }
+        #searchInput { width: 100%; padding: 18px 18px 18px 50px; font-size: 16px; background: rgba(0, 0, 0, 0.2); color: #ffffff; border: 1px solid var(--glass-border); border-radius: 12px; box-sizing: border-box; transition: all 0.3s ease; }
+        #searchInput::placeholder { color: var(--text-muted); }
+        #searchInput:focus { outline: none; border-color: var(--glow-color); background: rgba(0, 0, 0, 0.4); box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), inset 0 0 10px rgba(56, 189, 248, 0.1); }
+        .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); transition: all 0.3s ease; }
+        #searchInput:focus + .search-icon, #searchInput:focus ~ .search-icon { color: var(--glow-color); filter: drop-shadow(0 0 5px var(--glow-color)); }
+
+        .table-container { max-height: 500px; overflow-y: auto; border-radius: 10px; border: 1px solid var(--glass-border); }
+        .table-container::-webkit-scrollbar { width: 8px; }
+        .table-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .table-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--glass-border); }
+        th { background: rgba(255, 255, 255, 0.05); font-weight: 500; color: var(--text-muted); letter-spacing: 0.5px; position: sticky; top: 0; backdrop-filter: blur(10px); }
+        tr { transition: background 0.2s ease; }
+        tr:hover { background: rgba(255, 255, 255, 0.08); }
+        tr:last-child td { border-bottom: none; }
+        td.code-col { font-family: 'Courier New', Courier, monospace; font-size: 16px; color: var(--glow-color); text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); letter-spacing: 1px; }
+        .no-results { text-align: center; padding: 30px; color: var(--text-muted); font-style: italic; display: none; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar Added -->
+<nav class="top-nav">
+    <a href="index.html" class="nav-logo">
+        <span class="mark">X</span>
+        <span class="logo-text">Xauz <span class="sub">Office Tools</span></span>
+    </a>
+    <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="broken.html">Broken Salary</a>
+        <a href="gpf.html">GPF</a>
+        <a href="head.html" class="active">Accounts</a>
+        <a href="qr.html">QR Maker</a>
+    </div>
+</nav>
+
+<div class="bg-shape shape-1"></div>
+<div class="bg-shape shape-2"></div>
+
+<div class="search-container">
+    <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--glow-color); filter: drop-shadow(0 0 8px rgba(56,189,248,0.5));">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        Head of Account Tracker
+    </h2>
+    
+    <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" onkeyup="searchAccounts()" placeholder="Code emaw Hming (Entirnan: Salary, ORE, ADM) chhut rawh...">
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th width="45%">Account Code</th>
+                    <th width="55%">Account Name / Object Head</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+        <div id="noResults" class="no-results">
+            I thil zawn a awm lo...
+        </div>
+    </div>
+</div>
+
+<script>
+    const accounts = [
+        { code: "024S221001001010001", name: "DIR STATE - Salary" },
+        { code: "024S221001001020001", name: "ADM STATE - Salary" },
+        { code: "024S221001001020024", name: "ADM STATE - POL" },
+        { code: "024S221001001020149", name: "ADM ORE" },
+        { code: "024S221001110010001", name: "HOSP STATE - Salary" },
+        { code: "024S221001110010049", name: "HOSP ORE" },
+        { code: "024S221001110010149", name: "HOSP STATE - Other Charges / ORE" },
+        { code: "024S221003102010001", name: "SHC STATE - Salary" },
+        { code: "024S221003102010006", name: "SHC STATE - Medical Treatment" },
+        { code: "024S221003103010001", name: "PHC STATE - Salary" },
+        { code: "024S221003103010011", name: "PHC STATE - TE (Travel Expenses)" },
+        { code: "024S221006101010001", name: "NLCP STATE - Salary" },
+        { code: "024S221006101030001", name: "TB STATE - Salary" },
+        { code: "024S221006101040001", name: "EPI STATE - Salary" },
+        { code: "024S221006101080001", name: "NMEP STATE - Salary" },
+        { code: "024S221006104010001", name: "DRUGS STATE - Salary" },
+        { code: "024S221006104010002", name: "DRUGS STATE - Wages" },
+        { code: "024S221100101010001", name: "RFW STATE - Salary" },
+        { code: "024S221100103010001", name: "MCH STATE - Salary" }
+    ];
+
+    const tableBody = document.getElementById("tableBody");
+    const noResults = document.getElementById("noResults");
+
+    function displayData(data) {
+        tableBody.innerHTML = "";
+        if (data.length === 0) {
+            noResults.style.display = "block";
+            document.querySelector("table").style.display = "none";
+        } else {
+            noResults.style.display = "none";
+            document.querySelector("table").style.display = "table";
+            data.forEach(item => {
+                let row = `<tr>
+                    <td class="code-col">${item.code}</td>
+                    <td>${item.name}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+    }
+
+    function searchAccounts() {
+        let input = document.getElementById("searchInput").value.toUpperCase();
+        let filteredData = accounts.filter(item => item.code.toUpperCase().includes(input) || item.name.toUpperCase().includes(input));
+        displayData(filteredData);
+    }
+    displayData(accounts);
+</script>
+</body>
+</html>

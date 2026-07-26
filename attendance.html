@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance Report</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+            color: #1c1e21;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            min-height: 80vh;
+        }
+        
+        /* Controls UI */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            background: #e9ebee;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        select.season-select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #aaa;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: white;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-print { background-color: #607d8b; }
+        .btn-excel { background-color: #107c41; }
+        .btn-clear { background-color: #e74c3c; }
+        button:hover { opacity: 0.9; }
+        .hidden { display: none !important; }
+
+        /* Report Sections */
+        .sheet-section {
+            margin-bottom: 40px;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .summary-section {
+            background-color: #fcfcfc;
+            border: 2px solid #1877f2;
+        }
+        .sheet-header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1877f2;
+        }
+        .sheet-header h2 {
+            margin: 0;
+            color: #1877f2;
+            text-transform: uppercase;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .total-days-badge {
+            font-size: 1rem;
+            color: #555;
+            background: #e9ebee;
+            padding: 4px 12px;
+            border-radius: 15px;
+            text-transform: none;
+            font-weight: normal;
+        }
+
+        /* Two-Column Summary Layout */
+        .summary-container {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+        }
+        .summary-table-wrapper {
+            width: 49%;
+        }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 8px 6px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f7f8fa; color: #333; font-weight: 700; }
+        
+        /* Smaller font for summary to fit on one page */
+        .summary-section table { font-size: 11px; }
+        .summary-section th, .summary-section td { padding: 4px; }
+        .summary-section th { font-size: 10px; text-transform: uppercase; }
+
+        .text-center { text-align: center; }
+
+        /* Status Colors */
+        .status-absent { color: #d32f2f; background-color: #ffebee; font-weight: bold; }
+        .status-late { color: #f57c00; background-color: #fff3e0; font-weight: bold; }
+        .status-present { color: #2e7d32; }
+
+        /* PRINT SETTINGS */
+        @media print {
+            @page { size: landscape; margin: 10mm; } 
+            
+            body, html { 
+                background: white !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                height: auto !important;
+                -webkit-print-color-adjust: exact; 
+            }
+            
+            .container { 
+                box-shadow: none !important; 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                min-height: auto !important; 
+                display: block !important;
+            }
+            .controls { display: none !important; }
+            
+            .sheet-section {
+                border: none; margin: 0; padding: 0;
+                page-break-before: always; break-before: page;
+                page-break-inside: auto;
+            }
+            .sheet-section:first-of-type { page-break-before: auto; break-before: auto; }
+
+            .sheet-header h2 { 
+                font-size: 14pt; 
+                margin-bottom: 5px; 
+                color: black; 
+                border-bottom: 2px solid black; 
+                page-break-after: avoid; 
+            }
+            
+            .total-days-badge {
+                border: 1px solid #ccc;
+                background: transparent;
+                color: black;
+            }
+            
+            .summary-container { display: flex !important; width: 100%; }
+            
+            table { 
+                font-size: 9pt; 
+                width: 100%; 
+                page-break-inside: auto; 
+            }
+            tr { 
+                page-break-inside: avoid !important; 
+                page-break-after: auto !important; 
+            }
+            thead { 
+                display: table-row-group !important; 
+            }
+            th, td { border: 1px solid #444; padding: 3px 4px; }
+            
+            .status-absent { background-color: #ffcccc !important; color: black; }
+            .status-late { background-color: #ffe0b2 !important; color: black; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="controls">
+        <select id="seasonSelect" class="season-select">
+            <option value="17">☀️ Summer Timing (5:00 PM)</option>
+            <option value="16">❄️ Winter Timing (4:00 PM)</option>
+        </select>
+        <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+        <button id="btnExcel" class="btn-excel hidden" onclick="exportToExcel()"><span>📊</span> Download Excel</button>
+        <button id="btnPrint" class="btn-print hidden" onclick="window.print()"><span>🖨️</span> Print / PDF</button>
+        <button id="btnClear" class="btn-clear hidden" onclick="clearData()"><span>🗑️</span> Clear</button>
+    </div>
+
+    <div id="reportsContainer">
+        <div style="text-align:center; padding: 50px; color: #888;">
+            <h2>Attendance Report Generator</h2>
+            <p>Please upload your Excel/CSV file to begin.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let globalWorkbookData = [];
+
+    window.onload = function() {
+        const storedData = localStorage.getItem('smartSheetData');
+        if (storedData) {
+            globalWorkbookData = JSON.parse(storedData);
+            renderAllSheets(globalWorkbookData);
+        }
+    };
+
+    // Recalculate summary if the timing is changed
+    document.getElementById('seasonSelect').addEventListener('change', function() {
+        if (globalWorkbookData.length > 0) {
+            renderAllSheets(globalWorkbookData);
+        }
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array', cellDates: true}); 
+            processWorkbook(workbook);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function processWorkbook(workbook) {
+        globalWorkbookData = [];
+
+        workbook.SheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            const rawData = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
+            
+            if (rawData.length > 0) {
+                const processedSheet = processSingleSheet(rawData, sheetName);
+                if (processedSheet && processedSheet.rows.length > 0) {
+                    globalWorkbookData.push(processedSheet);
+                }
+            }
+        });
+
+        localStorage.setItem('smartSheetData', JSON.stringify(globalWorkbookData));
+        renderAllSheets(globalWorkbookData);
+    }
+
+    function processSingleSheet(data, originalSheetName) {
+        let headerRowIndex = -1;
+        for (let i = 0; i < Math.min(data.length, 10); i++) {
+            const rowStr = data[i].join(' ').toLowerCase();
+            if ((rowStr.includes('name') || rowStr.includes('employee')) && (rowStr.includes('designation') || rowStr.includes('office'))) {
+                headerRowIndex = i;
+                break;
+            }
+        }
+
+        if (headerRowIndex === -1) headerRowIndex = 0;
+
+        const headers = data[headerRowIndex].map(h => String(h).toLowerCase().trim());
+        const rows = [];
+        let dateFound = "";
+
+        const findCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
+
+        const colIdx = {
+            name: findCol(['full name', 'emp name', 'name', 'employee']),
+            desig: findCol(['designation', 'desig', 'role']),
+            mobile: findCol(['mobile', 'phone', 'contact']),
+            signin: findCol(['signin', 'sign in', 'in time', 'time in']),
+            signout: findCol(['signout', 'sign out', 'out time', 'time out']),
+            present: findCol(['present', 'status', 'attendance']),
+            remarks: findCol(['remarks', 'note'])
+        };
+
+        for (let i = headerRowIndex + 1; i < data.length; i++) {
+            const row = data[i];
+            if (!row || row.length === 0) continue;
+
+            const getVal = (idx) => {
+                if (idx === -1 || row[idx] === undefined) return "";
+                let val = row[idx];
+                if (val instanceof Date) {
+                    return val.toLocaleString('en-GB'); 
+                }
+                return String(val).trim();
+            };
+
+            let signinVal = getVal(colIdx.signin);
+            
+            if (!dateFound && signinVal) {
+                const parts = signinVal.split(' ');
+                if (parts.length > 0 && parts[0].includes('-')) dateFound = parts[0];
+                else if (signinVal.includes('/')) dateFound = signinVal.split(' ')[0];
+            }
+
+            rows.push({
+                fullName: getVal(colIdx.name),
+                designation: getVal(colIdx.desig),
+                mobile: getVal(colIdx.mobile),
+                signin: signinVal,
+                signout: getVal(colIdx.signout),
+                present: getVal(colIdx.present),
+                remarks: getVal(colIdx.remarks)
+            });
+        }
+
+        return {
+            sheetTitle: dateFound ? `Attendance - ${dateFound}` : originalSheetName,
+            date: dateFound,
+            rows: rows
+        };
+    }
+
+    function renderAllSheets(allData) {
+        const container = document.getElementById('reportsContainer');
+        container.innerHTML = ''; 
+
+        if (allData.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:20px;">No valid data found in file.</div>';
+            return;
+        }
+
+        // Render Daily Sheets
+        allData.forEach(sheetData => {
+            const section = document.createElement('div');
+            section.className = 'sheet-section';
+
+            const header = document.createElement('div');
+            header.className = 'sheet-header';
+            header.innerHTML = `<h2>Daily Attendance Report - ${sheetData.date || 'Unknown Date'}</h2>`;
+            section.appendChild(header);
+
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th width="18%">Full Name</th>
+                        <th width="15%">Designation</th>
+                        <th width="10%">Mobile</th>
+                        <th width="12%">Signin Time</th>
+                        <th width="12%">Signout Time</th>
+                        <th width="10%">Present</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sheetData.rows.map(row => {
+                        let statusClass = 'status-present';
+                        let p = row.present.toLowerCase();
+                        if(p.includes('absent')) statusClass = 'status-absent';
+                        else if(p.includes('late')) statusClass = 'status-late';
+                        else if(p === '') statusClass = ''; 
+
+                        return `
+                        <tr>
+                            <td>${row.fullName}</td>
+                            <td>${row.designation}</td>
+                            <td>${row.mobile}</td>
+                            <td>${row.signin}</td>
+                            <td>${row.signout}</td>
+                            <td class="${statusClass}">${row.present}</td>
+                            <td>${row.remarks}</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            `;
+            section.appendChild(table);
+            container.appendChild(section);
+        });
+
+        // Generate & Render Summary Page
+        if (allData.length > 0) {
+            const summaryData = calculateSummary(allData);
+            renderSummary(summaryData, container, allData.length);
+        }
+
+        document.getElementById('btnExcel').classList.remove('hidden');
+        document.getElementById('btnPrint').classList.remove('hidden');
+        document.getElementById('btnClear').classList.remove('hidden');
+    }
+
+    // --- SUMMARY LOGIC --- //
+    function calculateSummary(allData) {
+        const summary = {};
+        
+        // Get the selected timing (17 for 5PM, 16 for 4PM)
+        const outTimeLimit = parseInt(document.getElementById('seasonSelect').value, 10);
+
+        allData.forEach(sheet => {
+            const sheetDate = sheet.date;
+
+            sheet.rows.forEach(row => {
+                const name = row.fullName || "Unknown";
+                if (!name || name === "Unknown") return; 
+
+                if (!summary[name]) {
+                    summary[name] = { name: name, presentCount: 0, late: 0, leftEarly: 0, invalidSignout: 0, absent: 0 };
+                }
+
+                const presentStatus = (row.present || "").toLowerCase();
+                const remarks = (row.remarks || "").toLowerCase();
+
+                // 1. Leave Check (Earned leave, commuted, on leave etc)
+                const isLeave = presentStatus.includes('leave') || presentStatus.includes('commuted') || presentStatus.includes('earned') ||
+                                remarks.includes('leave') || remarks.includes('commuted') || remarks.includes('earned');
+                
+                const isAbsent = presentStatus.includes('absent');
+
+                // 2. Attendance Status Check
+                if (isAbsent) {
+                    summary[name].absent++;
+                } else {
+                    if (presentStatus.includes('late')) {
+                        summary[name].late++;
+                        summary[name].presentCount++; // Late is considered present
+                    } else if (presentStatus.includes('present')) {
+                        summary[name].presentCount++; // Normal present
+                    }
+                }
+
+                // 3. Signout Check Logic
+                const signoutStr = (row.signout || "").trim();
+                
+                const normalizeDate = (dStr) => {
+                    if (!dStr) return "";
+                    return dStr.split(' ')[0].replace(/\//g, '-').split('-').map(n => parseInt(n, 10)).join('-');
+                };
+
+                const normSheetDate = normalizeDate(sheetDate);
+                const normSignoutDate = normalizeDate(signoutStr);
+
+                // Ignore invalid signout if the person is on Leave or Absent
+                if (!isLeave && !isAbsent) {
+                    if (!signoutStr) {
+                        // Blank signout
+                        summary[name].invalidSignout++;
+                    } else if (normSheetDate !== normSignoutDate) {
+                        // Signout date doesn't match report date
+                        summary[name].invalidSignout++;
+                    } else {
+                        // Same date, check time against selected Out Time Limit
+                        const timeRegex = /(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?/i;
+                        const match = signoutStr.match(timeRegex);
+                        
+                        if (match) {
+                            let hours = parseInt(match[1], 10);
+                            let ampm = match[3] ? match[3].toLowerCase() : null;
+                            
+                            if (ampm === 'pm' && hours < 12) hours += 12;
+                            if (ampm === 'am' && hours === 12) hours = 0;
+                            
+                            if (hours < outTimeLimit) {
+                                summary[name].leftEarly++;
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        return Object.values(summary).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function renderSummary(summaryData, container, totalWorkingDays) {
+        const section = document.createElement('div');
+        section.className = 'sheet-section summary-section';
+        
+        const header = document.createElement('div');
+        header.className = 'sheet-header';
+        header.innerHTML = `<h2>Attendance Summary <span class="total-days-badge">Total Working Days: ${totalWorkingDays}</span></h2>`;
+        section.appendChild(header);
+
+        // Split data into two arrays for two columns
+        const half = Math.ceil(summaryData.length / 2);
+        const leftData = summaryData.slice(0, half);
+        const rightData = summaryData.slice(half);
+
+        const createTableHTML = (data) => {
+            if (data.length === 0) return '';
+            let tbodyHTML = data.map(row => `
+                <tr>
+                    <td>${row.name}</td>
+                    <td class="text-center">${row.presentCount > 0 ? row.presentCount : ''}</td>
+                    <td class="text-center">${row.late > 0 ? row.late : ''}</td>
+                    <td class="text-center">${row.leftEarly > 0 ? row.leftEarly : ''}</td>
+                    <td class="text-center">${row.invalidSignout > 0 ? row.invalidSignout : ''}</td>
+                    <td class="text-center">${row.absent > 0 ? row.absent : ''}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="summary-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="30%">Name</th>
+                                <th class="text-center" width="14%">Present</th>
+                                <th class="text-center" width="14%">Late</th>
+                                <th class="text-center" width="14%">Left Early</th>
+                                <th class="text-center" width="14%">Inv. Signout</th>
+                                <th class="text-center" width="14%">Absent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tbodyHTML}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        };
+
+        const flexContainer = document.createElement('div');
+        flexContainer.className = 'summary-container';
+        flexContainer.innerHTML = createTableHTML(leftData) + createTableHTML(rightData);
+
+        section.appendChild(flexContainer);
+        container.appendChild(section);
+    }
+    // --- END SUMMARY LOGIC --- //
+
+    function exportToExcel() {
+        const wb = XLSX.utils.book_new();
+        
+        globalWorkbookData.forEach(sheetData => {
+            const wsData = [
+                ["Full Name", "Designation", "Mobile", "Signin Time", "Signout Time", "Present", "Remarks"]
+            ];
+            sheetData.rows.forEach(r => {
+                wsData.push([r.fullName, r.designation, r.mobile, r.signin, r.signout, r.present, r.remarks]);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            let cleanName = (sheetData.date || sheetData.sheetTitle).replace(/[\/\\?\*\[\]]/g, '-').substring(0, 31);
+            XLSX.utils.book_append_sheet(wb, ws, cleanName);
+        });
+
+        if (globalWorkbookData.length > 0) {
+            const summaryData = calculateSummary(globalWorkbookData);
+            const summaryWsData = [
+                ["Name", "Present", "Late entry", "Left Early", "Invalid Signout", "Absent"]
+            ];
+            summaryData.forEach(r => {
+                summaryWsData.push([r.name, r.presentCount, r.late, r.leftEarly, r.invalidSignout, r.absent]);
+            });
+            const summaryWs = XLSX.utils.aoa_to_sheet(summaryWsData);
+            XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
+        }
+
+        XLSX.writeFile(wb, "Attendance_Report_Clean.xlsx");
+    }
+
+    function clearData() {
+        localStorage.removeItem('smartSheetData');
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
