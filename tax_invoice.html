@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tax Invoice Generator</title>
+<style>
+    :root {
+        --bg-color: #eef1f5;
+        --panel-bg: #ffffff;
+        --border-color: #d2d6de;
+        --print-border: #000000;
+        --accent: #0b5ed7;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); height: 100vh; display: flex; overflow: hidden; }
+    .editor-panel { width: 36%; background: var(--panel-bg); padding: 20px; overflow-y: auto; border-right: 1px solid var(--border-color); box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; }
+    .preview-panel { width: 64%; padding: 20px; overflow-y: auto; background: #525659; display: flex; justify-content: center; }
+
+    .invoice-container { background: #fff; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 5px 15px rgba(0,0,0,0.3); box-sizing: border-box; color: #000; position: relative; }
+    .invoice-frame { border: 1.5px solid #000; padding: 8mm; min-height: 277mm; }
+
+    /* Print Styles */
+    @media print {
+        body { display: block; background: #fff; height: auto; overflow: visible; }
+        .editor-panel { display: none; }
+        .preview-panel { width: 100%; padding: 0; background: none; display: block; }
+        .invoice-container { box-shadow: none; width: 100%; min-height: 0; padding: 0; }
+        .invoice-frame { border: 1.5px solid #000; min-height: 0; }
+        @page { size: A4; margin: 8mm 10mm; }
+        .inv-table tr, .inv-parties, .inv-header, .inv-details-top, .inv-summary-container, .inv-footer { page-break-inside: avoid; }
+        .inv-table thead { display: table-header-group; }
+    }
+
+    /* Form Styles */
+    h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 8px; color: #333; }
+    h3.section-title { font-size: 1rem; color: #555; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-top: 20px; margin-bottom: 10px;}
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 12px; margin-bottom: 4px; font-weight: bold; color: #555; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 12px; box-sizing: border-box; }
+    .form-group textarea { resize: vertical; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; }
+    .hint { font-size: 11px; color: #888; margin-top: -8px; margin-bottom: 10px; }
+    .warn-text { color: #c0392b; font-weight: bold; }
+
+    .items-table-input { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 11px; }
+    .items-table-input th { background: #f8f9fa; border: 1px solid #ddd; padding: 6px; text-align: left; }
+    .items-table-input td { border: 1px solid #ddd; padding: 2px; }
+    .items-table-input input { width: 100%; box-sizing: border-box; border: none; padding: 4px; font-size: 11px; }
+    .items-table-input input:focus { outline: 1px solid var(--accent); }
+
+    .btn { padding: 8px 15px; background: var(--accent); color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 13px; font-weight: bold; transition: background 0.2s; }
+    .btn:hover { background: #0847ad; }
+    .btn-danger { background: #dc3545; padding: 4px 8px; font-size: 11px;}
+    .btn-danger:hover { background: #c82333; }
+    .btn-success { background: #28a745; width: 100%; margin-top: 15px; font-size: 15px; padding: 12px;}
+    .btn-success:hover { background: #218838; }
+
+    /* Invoice Preview Styles */
+    .inv-copytype { text-align: right; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+    .inv-header { text-align: center; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 8px; }
+    .inv-header h1 { margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    .inv-header h2 { margin: 3px 0 0 0; font-size: 14px; font-weight: bold; border: none; padding: 0; color: #000; }
+    .inv-header h3 { margin: 2px 0 0 0; font-size: 11px; font-weight: normal; color: #333; }
+
+    .inv-details-top { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 10px; line-height: 1.35; border-bottom: 1px solid #000; padding-bottom: 10px; }
+    .inv-details-top .left-col { width: 56%; padding-right: 12px; }
+    .inv-details-top .left-col .addr-line { display: block; word-wrap: break-word; overflow-wrap: break-word; margin-bottom: 2px; }
+    .inv-details-top .left-col .info-line { display: block; margin-bottom: 1px; }
+    .inv-details-top .right-col { width: 42%; }
+    .inv-details-top .right-col table { width: 100%; border-collapse: collapse; }
+    .inv-details-top .right-col table td { padding: 1.5px 0; vertical-align: top; }
+    .inv-details-top .right-col table td:first-child { font-weight: bold; width: 48%; }
+
+    .inv-parties { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 10px; line-height: 1.35; }
+    .inv-party-box { width: 48.5%; border: 1px solid #000; padding: 6px 8px; }
+    .inv-party-box h4 { margin: 0 0 5px 0; font-size: 12px; text-decoration: underline; }
+    .inv-party-box table { width: 100%; border-collapse: collapse; }
+    .inv-party-box table td { padding: 1.5px 0; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
+    .inv-party-box table td:first-child { width: 26%; font-weight: 600; }
+
+    .inv-table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 0; }
+    .inv-table th, .inv-table td { border: 1px solid var(--print-border); padding: 4px 3px; text-align: center; }
+    .inv-table th { font-weight: bold; background: #f4f4f4; }
+    .inv-table td.text-left { text-align: left; }
+    .inv-table td.text-right { text-align: right; }
+    .inv-table td.text-bold { font-weight: bold; }
+    .inv-table tfoot td { font-weight: bold; background: #fafafa; }
+
+    .inv-summary-container { display: flex; justify-content: space-between; font-size: 11.5px; margin-top: 10px; }
+    .inv-bank-info { width: 46%; }
+    .inv-bank-box { border: 1px solid var(--print-border); padding: 8px; line-height: 1.4; height: 100%; }
+    .inv-bank-box h4 { margin: 0 0 5px 0; font-size: 12px; text-decoration: underline; text-align: center; }
+
+    .inv-totals-box { width: 50%; }
+    .inv-totals-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .inv-totals-table th, .inv-totals-table td { border: 1px solid var(--print-border); padding: 4px 6px; text-align: right; }
+    .inv-totals-table th { text-align: left; font-weight: bold; width: 58%; background: #fafafa; }
+    .inv-totals-table tr.grand-total th, .inv-totals-table tr.grand-total td { font-size: 13px; background: #f0f0f0; }
+
+    .inv-meta-row { display: flex; justify-content: space-between; font-size: 11px; margin-top: 8px; border-top: 1px dashed #999; padding-top: 6px; }
+
+    .inv-declaration { margin-top: 12px; font-size: 10.5px; color: #333; font-style: italic; }
+
+    .inv-footer { margin-top: 20px; font-size: 11.5px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .inv-amount-words { width: 62%; font-weight: bold; line-height: 1.3; }
+    .inv-sign { width: 32%; text-align: center; }
+    .inv-sign .sign-space { height: 45px; }
+    .inv-sign .sign-line { border-top: 1px solid var(--print-border); padding-top: 4px; font-weight: bold; font-size: 11px; }
+
+</style>
+</head>
+<body>
+
+<div class="editor-panel">
+    <h2>Invoice Settings</h2>
+
+    <h3 class="section-title">Shop Details</h3>
+    <div class="form-group">
+        <label>Shop Name</label>
+        <input type="text" id="i_shopName" value="" oninput="updatePreview()">
+    </div>
+    <div class="form-group">
+        <label>Invoice Title</label>
+        <input type="text" id="i_invoiceTitle" value="TAX INVOICE" oninput="updatePreview()">
+    </div>
+    <div class="form-group">
+        <label>Copy Type</label>
+        <select id="i_copyType" onchange="updatePreview()">
+            <option value="ORIGINAL FOR RECIPIENT">Original for Recipient</option>
+            <option value="DUPLICATE FOR TRANSPORTER">Duplicate for Transporter</option>
+            <option value="TRIPLICATE FOR SUPPLIER">Triplicate for Supplier</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Address</label>
+        <textarea id="i_shopAddress" rows="2" oninput="updatePreview()"></textarea>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>GSTIN</label>
+            <input type="text" id="i_shopGstin" value="" maxlength="15" placeholder="15AAAAA0000A1Z5" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Phone No</label>
+            <input type="text" id="i_shopPhone" value="" oninput="updatePreview()">
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <input type="text" id="i_shopEmail" value="" oninput="updatePreview()">
+    </div>
+
+    <h3 class="section-title">Invoice Details</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Invoice No. <span id="invNoCount" style="font-weight:normal; color:#888;"></span></label>
+            <input type="text" id="i_invNo" value="" maxlength="16" oninput="updatePreview(); updateInvNoCount()">
+        </div>
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="i_invDate" value="" oninput="updatePreview()">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Payment terms</label>
+            <input type="text" id="i_payTerms" value="" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Due Date</label>
+            <input type="date" id="i_dueDate" value="" oninput="updatePreview()">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Place of Supply</label>
+            <input type="text" id="i_placeOfSupply" value="" placeholder="15-Mizoram" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Reverse Charge Applicable</label>
+            <select id="i_reverseCharge" onchange="updatePreview()">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>E-way Bill No.</label>
+        <input type="text" id="i_ewayBill" value="" oninput="updatePreview()">
+    </div>
+
+    <h3 class="section-title">Bill To (Recipient)</h3>
+    <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="i_billName" value="" oninput="updatePreview()">
+    </div>
+    <div class="form-group">
+        <label>Address</label>
+        <textarea id="i_billAddress" rows="2" oninput="updatePreview()"></textarea>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>GSTIN</label>
+            <input type="text" id="i_billGstin" value="" maxlength="15" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Phone No</label>
+            <input type="text" id="i_billPhone" value="" oninput="updatePreview()">
+        </div>
+    </div>
+
+    <h3 class="section-title">Ship To</h3>
+    <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="i_shipName" value="" oninput="updatePreview()">
+    </div>
+    <div class="form-group">
+        <label>Address</label>
+        <textarea id="i_shipAddress" rows="2" oninput="updatePreview()"></textarea>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>GSTIN</label>
+            <input type="text" id="i_shipGstin" value="" maxlength="15" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Phone No</label>
+            <input type="text" id="i_shipPhone" value="" oninput="updatePreview()">
+        </div>
+    </div>
+
+    <h3 class="section-title">Bank Details</h3>
+    <div class="form-group">
+        <label>Bank Name</label>
+        <input type="text" id="i_bankName" value="" oninput="updatePreview()">
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>A/C No</label>
+            <input type="text" id="i_bankAc" value="" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>IFSC</label>
+            <input type="text" id="i_bankIfsc" value="" oninput="updatePreview()">
+        </div>
+    </div>
+
+    <h3 class="section-title">Items</h3>
+    <div style="overflow-x: auto;">
+        <table class="items-table-input" id="itemsTable">
+            <thead>
+                <tr>
+                    <th width="28%">Product</th>
+                    <th width="14%">HSN/SAC</th>
+                    <th width="10%">Unit</th>
+                    <th width="10%">Qty</th>
+                    <th width="15%">Rate (₹)</th>
+                    <th width="13%">GST %</th>
+                    <th width="10%">Act</th>
+                </tr>
+            </thead>
+            <tbody id="itemsBody">
+                <!-- Rows injected by JS -->
+            </tbody>
+        </table>
+    </div>
+    <button class="btn" onclick="addItem()">+ Add Item</button>
+
+    <button class="btn btn-success" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    <button class="btn btn-danger" style="width: 100%; margin-top: 8px; padding: 8px;" onclick="clearSavedData()">Clear All Data</button>
+    <div class="hint" style="margin-top: 8px;">Your entries are saved automatically in this browser, so they'll still be here next time you open this file on this device.</div>
+</div>
+
+<div class="preview-panel">
+    <div class="invoice-container" id="printableArea">
+      <div class="invoice-frame">
+        <div class="inv-copytype" id="p_copyType">ORIGINAL FOR RECIPIENT</div>
+
+        <div class="inv-header">
+            <h1 id="p_shopName">M/s KHUMTEA ENTERPRISE</h1>
+            <h2 id="p_invoiceTitle">TAX INVOICE</h2>
+            <h3>(As per Rule 46 of the CGST Rules, 2017)</h3>
+        </div>
+
+        <div class="inv-details-top">
+            <div class="left-col">
+                <span class="addr-line"><strong>Address:</strong> <span id="p_shopAddress">H/No 1245, Kungfu Tlang, Sakawrdai</span></span>
+                <span class="info-line"><strong>GSTIN:</strong> <span id="p_shopGstin">15AABCN1234A1Z5</span></span>
+                <span class="info-line"><strong>Phone No:</strong> <span id="p_shopPhone">9898989898</span></span>
+                <span class="info-line"><strong>Email:</strong> <span id="p_shopEmail">khumtea@gmail.com</span></span>
+            </div>
+            <div class="right-col">
+                <table>
+                    <tr><td>Invoice No & Date</td><td>: <span id="p_invNo">KTR/001/2026</span> Dt. <span id="p_invDate">12/9/2026</span></td></tr>
+                    <tr><td>Payment terms</td><td>: <span id="p_payTerms">30 days</span></td></tr>
+                    <tr><td>Payment due date</td><td>: <span id="p_dueDate">12/9/2026</span></td></tr>
+                    <tr><td>Place of Supply</td><td>: <span id="p_placeOfSupply">15-Mizoram</span></td></tr>
+                    <tr><td>Reverse Charge</td><td>: <span id="p_reverseCharge">No</span></td></tr>
+                    <tr><td>E-way Bill No.</td><td>: <span id="p_ewayBill"></span></td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="inv-parties">
+            <div class="inv-party-box">
+                <h4>BILL TO (RECIPIENT)</h4>
+                <table>
+                    <tr><td>Name:</td><td><span id="p_billName">CMO Aizawl East</span></td></tr>
+                    <tr><td>Address:</td><td><span id="p_billAddress">Dinthar Veng, Aizawl</span></td></tr>
+                    <tr><td>GSTIN:</td><td><span id="p_billGstin"></span></td></tr>
+                    <tr><td>Phone No:</td><td><span id="p_billPhone"></span></td></tr>
+                </table>
+            </div>
+            <div class="inv-party-box">
+                <h4>SHIP TO</h4>
+                <table>
+                    <tr><td>Name:</td><td><span id="p_shipName">CHC Sakawrdai</span></td></tr>
+                    <tr><td>Address:</td><td><span id="p_shipAddress">Sakawrdai</span></td></tr>
+                    <tr><td>GSTIN:</td><td><span id="p_shipGstin"></span></td></tr>
+                    <tr><td>Phone No:</td><td><span id="p_shipPhone">9458568987</span></td></tr>
+                </table>
+            </div>
+        </div>
+
+        <table class="inv-table">
+            <thead>
+                <tr>
+                    <th width="4%">Sl.</th>
+                    <th width="23%">Product Name</th>
+                    <th width="8%">HSN/SAC</th>
+                    <th width="6%">Unit</th>
+                    <th width="6%">Qnty</th>
+                    <th width="8%">Rate</th>
+                    <th width="10%">Total Value</th>
+                    <th width="13%">Taxable Value</th>
+                    <th width="6%">GST %</th>
+                    <th width="16%">GST Amount</th>
+                </tr>
+            </thead>
+            <tbody id="p_itemsBody">
+                <!-- Injected via JS, includes sub-total row as last row -->
+            </tbody>
+        </table>
+
+        <div class="inv-summary-container">
+            <div class="inv-bank-info">
+                <div class="inv-bank-box">
+                    <h4>BANK DETAILS</h4>
+                    Bank Name: <span id="p_bankName">SBI, Dawrpui</span><br>
+                    A/C No: <span id="p_bankAc">54545454554544545</span><br>
+                    IFSC Code: <span id="p_bankIfsc">SBIN002014</span>
+                </div>
+            </div>
+
+            <div class="inv-totals-box">
+                <table class="inv-totals-table">
+                    <tr><th>Total Taxable Value</th><td id="p_totTaxable">0.00</td></tr>
+                    <tr><th>Total CGST</th><td id="p_totCgst">0.00</td></tr>
+                    <tr><th>Total SGST</th><td id="p_totSgst">0.00</td></tr>
+                    <tr><th>Total GST</th><td id="p_totGst">0.00</td></tr>
+                    <tr><th>Round Off</th><td id="p_roundOff">0.00</td></tr>
+                    <tr class="grand-total"><th>GRAND TOTAL</th><td id="p_grandTotal">0</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="inv-declaration">
+            Certified that the particulars given above are true and correct and the amount indicated represents the price actually charged and that there is no flow of additional consideration directly or indirectly from the buyer.
+        </div>
+
+        <div class="inv-footer">
+            <div class="inv-amount-words">
+                Amount in words: <span id="p_amountWords">Rupees Zero Only</span>
+            </div>
+            <div class="inv-sign">
+                <div class="sign-space"></div>
+                <div class="sign-line" id="p_signShopName">For M/s KHUMTEA ENTERPRISE<br>Authorised Signatory</div>
+            </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'gstInvoiceFormData_v1';
+    const FIELD_IDS = ['shopName','invoiceTitle','copyType','shopAddress','shopGstin','shopPhone','shopEmail',
+        'invNo','invDate','payTerms','dueDate','placeOfSupply','reverseCharge','ewayBill',
+        'billName','billAddress','billGstin','billPhone',
+        'shipName','shipAddress','shipGstin','shipPhone',
+        'bankName','bankAc','bankIfsc'];
+
+    let items = [];
+
+    function saveState() {
+        try {
+            const fields = {};
+            FIELD_IDS.forEach(id => {
+                const el = document.getElementById('i_' + id);
+                if (el) fields[id] = el.value;
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ fields: fields, items: items }));
+        } catch (e) {
+            // Storage unavailable (private browsing, etc.) - fail silently, app still works
+        }
+    }
+
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            const data = JSON.parse(raw);
+            if (data.fields) {
+                FIELD_IDS.forEach(id => {
+                    const el = document.getElementById('i_' + id);
+                    if (el && data.fields[id] !== undefined) el.value = data.fields[id];
+                });
+            }
+            if (Array.isArray(data.items) && data.items.length > 0) {
+                items = data.items;
+            }
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function clearSavedData() {
+        if (!confirm('This will erase all saved invoice data from this browser. Continue?')) return;
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        FIELD_IDS.forEach(id => {
+            const el = document.getElementById('i_' + id);
+            if (el && el.tagName !== 'SELECT') el.value = '';
+        });
+        document.getElementById('i_copyType').selectedIndex = 0;
+        document.getElementById('i_reverseCharge').value = 'No';
+        items = [];
+        renderItemsInput();
+    }
+
+    function renderItemsInput() {
+        const tbody = document.getElementById("itemsBody");
+        tbody.innerHTML = "";
+        items.forEach((item, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><input type="text" value="${escapeHtml(item.name)}" oninput="updateItem(${index}, 'name', this.value)"></td>
+                    <td><input type="text" value="${escapeHtml(item.hsn)}" oninput="updateItem(${index}, 'hsn', this.value)"></td>
+                    <td><input type="text" value="${escapeHtml(item.unit)}" oninput="updateItem(${index}, 'unit', this.value)"></td>
+                    <td><input type="number" min="0" step="any" value="${item.qty}" oninput="updateItem(${index}, 'qty', this.value)"></td>
+                    <td><input type="number" min="0" step="any" value="${item.rate}" oninput="updateItem(${index}, 'rate', this.value)"></td>
+                    <td><input type="number" min="0" max="100" step="any" value="${item.gst}" oninput="updateItem(${index}, 'gst', this.value)"></td>
+                    <td><button class="btn btn-danger" onclick="removeItem(${index})">X</button></td>
+                </tr>
+            `;
+        });
+        updatePreview();
+    }
+
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function updateItem(index, field, value) {
+        if (field === 'qty' || field === 'rate' || field === 'gst') {
+            let v = parseFloat(value);
+            if (isNaN(v) || v < 0) v = 0;
+            if (field === 'gst' && v > 100) v = 100;
+            items[index][field] = v;
+        } else {
+            items[index][field] = value;
+        }
+        updatePreview();
+    }
+
+    function addItem() {
+        items.push({ name: "", hsn: "", unit: "", qty: 1, rate: 0, gst: 0 });
+        renderItemsInput();
+    }
+
+    function removeItem(index) {
+        items.splice(index, 1);
+        renderItemsInput();
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return "";
+        let d = new Date(dateStr + "T00:00:00");
+        if (isNaN(d)) return dateStr;
+        let dd = String(d.getDate()).padStart(2, '0');
+        let mm = String(d.getMonth() + 1).padStart(2, '0');
+        return dd + "/" + mm + "/" + d.getFullYear();
+    }
+
+    function numberToWords(num) {
+        num = Math.round(Math.abs(Number(num)) || 0);
+        if (num === 0) return "Rupees Zero Only";
+        const a = ['','one ','two ','three ','four ', 'five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
+        const b = ['', '', 'twenty','thirty','forty','fifty', 'sixty','seventy','eighty','ninety'];
+        let numStr = num.toString();
+        if (numStr.length > 9) return "Rupees " + num.toLocaleString('en-IN') + " Only";
+        let n = ('000000000' + numStr).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+        if (!n) return "";
+        let str = '';
+        str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'crore ' : '';
+        str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'lakh ' : '';
+        str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'thousand ' : '';
+        str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'hundred ' : '';
+        str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+        str = str.trim();
+        return "Rupees " + str.charAt(0).toUpperCase() + str.slice(1) + " Only";
+    }
+
+    function updatePreview() {
+        saveState();
+        // Map simple fields
+        const fields = ['shopName', 'invoiceTitle', 'shopAddress', 'shopGstin', 'shopPhone', 'shopEmail',
+                        'invNo', 'payTerms', 'ewayBill', 'placeOfSupply', 'reverseCharge',
+                        'billName', 'billAddress', 'billGstin', 'billPhone',
+                        'shipName', 'shipAddress', 'shipGstin', 'shipPhone', 'bankName', 'bankAc', 'bankIfsc'];
+
+        fields.forEach(f => {
+            document.getElementById('p_' + f).innerText = document.getElementById('i_' + f).value;
+        });
+
+        document.getElementById('p_copyType').innerText = document.getElementById('i_copyType').value;
+        document.getElementById('p_invDate').innerText = formatDate(document.getElementById('i_invDate').value);
+        document.getElementById('p_dueDate').innerText = formatDate(document.getElementById('i_dueDate').value);
+        document.getElementById('p_signShopName').innerHTML = "For " + escapeHtml(document.getElementById('i_shopName').value) + "<br>Authorised Signatory";
+
+        // Process Items
+        const pTbody = document.getElementById("p_itemsBody");
+        pTbody.innerHTML = "";
+
+        let totalQnty = 0;
+        let totalRateSum = 0;
+        let totalTaxableSum = 0;
+        let totalGstSum = 0;
+
+        items.forEach((item, index) => {
+            let tr = (item.qty || 0) * (item.rate || 0);
+            let taxVal = 0;
+            let gstAmt = 0;
+
+            if (item.gst > 0) {
+                taxVal = tr * 100 / (100 + item.gst);
+                gstAmt = tr - taxVal;
+                totalGstSum += gstAmt;
+            } else {
+                taxVal = tr;
+            }
+            totalTaxableSum += taxVal;
+
+            totalQnty += (item.qty || 0);
+            totalRateSum += tr;
+
+            let displayTaxVal = taxVal.toFixed(2);
+            let displayGstAmt = item.gst > 0 ? gstAmt.toFixed(2) : "NIL";
+            let displayGstPerc = item.gst > 0 ? item.gst + "%" : "NIL";
+
+            pTbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td class="text-left">${escapeHtml(item.name)}</td>
+                    <td>${escapeHtml(item.hsn)}</td>
+                    <td>${escapeHtml(item.unit)}</td>
+                    <td>${item.qty}</td>
+                    <td class="text-right">${(item.rate || 0).toFixed(2)}</td>
+                    <td class="text-right">${tr.toFixed(2)}</td>
+                    <td class="text-right">${displayTaxVal}</td>
+                    <td>${displayGstPerc}</td>
+                    <td class="text-right">${displayGstAmt}</td>
+                </tr>
+            `;
+        });
+
+        // Sub-total row (part of tbody, so it never repeats on multi-page prints)
+        pTbody.innerHTML += `
+            <tr>
+                <td colspan="4" class="text-left text-bold">Sub-Total</td>
+                <td class="text-bold">${totalQnty}</td>
+                <td></td>
+                <td class="text-bold text-right">${totalRateSum.toFixed(2)}</td>
+                <td class="text-bold text-right">${totalTaxableSum.toFixed(2)}</td>
+                <td></td>
+                <td class="text-bold text-right">${totalGstSum.toFixed(2)}</td>
+            </tr>
+        `;
+
+        // Grand total with round-off adjustment
+        let rawGrandTotal = totalTaxableSum + totalGstSum;
+        let roundedGrandTotal = Math.round(rawGrandTotal);
+        let roundOff = roundedGrandTotal - rawGrandTotal;
+
+        document.getElementById('p_totTaxable').innerText = totalTaxableSum.toFixed(2);
+        document.getElementById('p_totCgst').innerText = (totalGstSum / 2).toFixed(2);
+        document.getElementById('p_totSgst').innerText = (totalGstSum / 2).toFixed(2);
+        document.getElementById('p_totGst').innerText = totalGstSum.toFixed(2);
+        document.getElementById('p_roundOff').innerText = (roundOff >= 0 ? "+" : "") + roundOff.toFixed(2);
+        document.getElementById('p_grandTotal').innerText = "\u20B9 " + roundedGrandTotal.toLocaleString('en-IN');
+
+        document.getElementById('p_amountWords').innerText = numberToWords(roundedGrandTotal);
+    }
+
+    function updateInvNoCount() {
+        const el = document.getElementById('i_invNo');
+        const countEl = document.getElementById('invNoCount');
+        if (!el || !countEl) return;
+        const len = el.value.length;
+        countEl.innerText = '(' + len + '/16)';
+        countEl.className = len >= 16 ? 'warn-text' : '';
+    }
+
+    // Init
+    window.onload = function() {
+        loadState();
+        if (items.length === 0) {
+            items.push({ name: "", hsn: "", unit: "", qty: 1, rate: 0, gst: 0 });
+        }
+        renderItemsInput();
+        updateInvNoCount();
+    };
+</script>
+</body>
+</html>
