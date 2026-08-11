@@ -168,7 +168,6 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    /* A hrim hrim pawha glass tam zawk */
     background: rgba(245, 241, 230, 0.03); 
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -180,11 +179,10 @@
       transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), 
       box-shadow 0.4s ease, 
       border-color 0.4s ease,
-      background 0.4s ease; /* Background transition belh a ni */
+      background 0.4s ease;
     overflow: hidden;
   }
 
-  /* A tlinna (shiny reflection) siamna */
   .card::after {
     content: '';
     position: absolute;
@@ -192,7 +190,7 @@
     background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.02) 100%);
     pointer-events: none;
     transition: opacity 0.4s ease;
-    opacity: 0.6; /* A hrim hrim in a tle deuh */
+    opacity: 0.6;
   }
 
   .card:nth-child(1){ animation-delay: 0.05s; }
@@ -202,6 +200,7 @@
   .card:nth-child(5){ animation-delay: 0.25s; }
   .card:nth-child(6){ animation-delay: 0.30s; }
   .card:nth-child(7){ animation-delay: 0.35s; }
+  .card:nth-child(8){ animation-delay: 0.40s; } /* Thlak thar */
 
   .card-1{ --tab: var(--teal); }
   .card-2{ --tab: var(--gold); }
@@ -210,8 +209,8 @@
   .card-5{ --tab: var(--blue); }
   .card-6{ --tab: var(--plum); }
   .card-7{ --tab: var(--rust); }
+  .card-8{ --tab: var(--teal); } /* Thlak thar */
 
-  /* Folder tab, top edge - a eng zual deuh ang */
   .card .tab {
     height: 5px; width: 100%;
     background: var(--tab);
@@ -243,27 +242,15 @@
   .card p { color: var(--muted); font-size: 0.92rem; line-height: 1.55; font-weight: 400; transition: color 0.3s ease; }
   .card p[lang="lus"]{ font-style: italic; }
 
-
-  /* =========================================
-     HOVER STATE - KHAWVEL THAR
-     ========================================= */
-
   .card:hover {
-    transform: translateY(-8px) scale(1.01); /* A hmaa aiin a sang zawk in a lo lian zawk */
-    
-    /* Hemi hian a card pum kha no deuhvin a rawn ti eng ang, glass style in */
+    transform: translateY(-8px) scale(1.01); 
     background: color-mix(in srgb, var(--tab) 12%, rgba(10, 14, 26, 0.6));
-    
-    /* A tlang eng chiang zawk */
     border-color: color-mix(in srgb, var(--tab) 60%, transparent);
-    
-    /* A hnuai shadow a rawngin a eng tel bawk */
     box-shadow: 
       0 22px 40px rgba(0,0,0,0.5), 
       0 0 15px color-mix(in srgb, var(--tab) 30%, transparent);
   }
 
-  /* Hover huna a tle hrim hrim ti zual turin */
   .card:hover::after {
     opacity: 1;
     background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0.05) 100%);
@@ -272,7 +259,7 @@
   .card:hover .icon-wrapper {
     transform: scale(1.1) rotate(-6deg);
     background: var(--tab);
-    color: #0A0E1A; /* A chhung icon pawh a thim tawh ang */
+    color: #0A0E1A; 
     box-shadow: 0 0 15px var(--tab);
   }
 
@@ -283,7 +270,6 @@
     transform: translateX(4px);
   }
 
-  /* A chhung text te pawh a rawn fiah zual ang */
   .card:hover h3 { color: var(--parchment); }
   .card:hover p { color: rgba(245, 241, 230, 0.9); }
 
@@ -344,6 +330,7 @@
       <li><a href="broken.html">Broken Salary</a></li>
       <li><a href="attendance.html">Attendance</a></li>
       <li><a href="QR.html">QR Maker</a></li>
+      <li><a href="tax_invoice.html">Tax Invoice</a></li> <!-- Thlak thar -->
     </ul>
   </nav>
 
@@ -442,6 +429,19 @@
         </div>
         <h3>QR Siamna</h3>
         <p lang="lus">QR Code siam zung zung na, thlalak pawh direct in a siam theih.</p>
+      </div>
+    </a>
+
+    <!-- Thlak thar: Tax Invoice Card -->
+    <a href="tax_invoice.html" class="card card-8">
+      <div class="tab"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="icon-wrapper"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+          <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+        <h3>Tax Invoice</h3>
+        <p lang="lus">Tax invoice siamna tur.</p>
       </div>
     </a>
   </main>
