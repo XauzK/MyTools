@@ -1,0 +1,27 @@
+{
+  "accounts": [
+    { "code": "024S221001001010001", "name": "Direction|Salary|01" },
+    { "code": "024S221001001020001", "name": "ADM|Salary|01" },
+    { "code": "024S221001001020024", "name": "ADM|F&L|24" },
+    { "code": "024S221001001020149", "name": "ADM|ORE|149" },
+    { "code": "024S221001110010001", "name": "HOSP|Salary|01" },
+    { "code": "024S221001110010049", "name": "HOSP|ORE|049" },
+    { "code": "024S221001110010149", "name": "HOSP|ORE DIET|149" },
+    { "code": "024S221003102010001", "name": "SHC|Salary|01" },
+    { "code": "024S221003102010006", "name": "SHC|MT/MTE|06" },
+    { "code": "024S221003103010001", "name": "PHC|Salary|01" },
+    { "code": "024S221003103010006", "name": "PHC|MT/MTE|06" },
+    { "code": "024S221003103010011", "name": "PHC|TE|11" },
+    { "code": "024S221003103010049", "name": "PHC|ORE|049" },
+    { "code": "024S221006101010001", "name": "NLCP|Salary|01" },
+    { "code": "024S221006101030001", "name": "TB|Salary|01" },
+    { "code": "024S221006101040001", "name": "Control of Epidemic|Salary|01" },
+    { "code": "024S221006101080001", "name": "NMEP|Salary|01" },
+    { "code": "024S221006104010001", "name": "Drugs|Salary|01" },
+    { "code": "024S221006104010002", "name": "Drugs|Wages|02" },
+    { "code": "024S221006104040002", "name": "Drugs|Wages|02" },
+    { "code": "024S221100001020001", "name": "ADM CSS|Salary|01" },
+    { "code": "024S221100101010001", "name": "RFW|Salary|01" },
+    { "code": "024S221100103010001", "name": "MCH|Salary|01" }
+  ]
+}
