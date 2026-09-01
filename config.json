@@ -22,8 +22,8 @@
     { "code": "024S221006104040002", "name": "Drugs|Wages|02" },
     { "code": "024S221100001020001", "name": "ADM CSS|Salary|01" },
     { "code": "024S221100101010001", "name": "RFW|Salary|01" },
-    { "code": "024S221100103010001", "name": "MCH|Salary|01" }
-    { "code": "024S221001110010029", "name": "HOSP|R&M|29" }
+    { "code": "024S221100103010001", "name": "MCH|Salary|01" },
+    { "code": "024S221001110010029", "name": "HOSP|R&M|29" },
     { "code": "024S221001001010024", "name": "DIR|ORE|24" }
   ]
 }
