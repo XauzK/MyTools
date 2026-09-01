@@ -16,7 +16,7 @@
         }
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0A0E1A; /* Matched to main theme */
+            background-color: #0A0E1A;
             color: var(--text-main);
             margin: 0;
             padding: 0;
@@ -27,7 +27,6 @@
             position: relative;
             overflow-x: hidden;
         }
-        /* Navbar Styles */
         nav.top-nav {
             position: sticky; top: 0; z-index: 1000; width: 100%;
             display: flex; justify-content: space-between; align-items: center;
@@ -49,12 +48,11 @@
         .nav-links { display: flex; gap: 0.3rem; }
         .nav-links a { text-decoration: none; color: #93a0b8; font-size: 0.9rem; font-weight: 500; padding: 0.55rem 1rem; border-radius: 10px; transition: all 0.3s; }
         .nav-links a:hover, .nav-links a.active { background: rgba(245, 241, 230, 0.09); color: #f5f1e6; }
-        
-        /* Background Glowing Shapes */
+
         .bg-shape { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -1; }
         .shape-1 { top: 10%; left: -100px; width: 500px; height: 500px; background: rgba(79, 209, 197, 0.15); }
         .shape-2 { bottom: -150px; right: -100px; width: 600px; height: 600px; background: rgba(108, 142, 191, 0.15); }
-        
+
         .search-container {
             background: rgba(245, 241, 230, 0.03);
             backdrop-filter: blur(16px);
@@ -69,21 +67,44 @@
             margin-bottom: 40px;
             box-sizing: border-box;
         }
-        
-        h2 { margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 400; letter-spacing: 1px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 30px; text-shadow: 0 0 15px rgba(255, 255, 255, 0.3); display: flex; align-items: center; gap: 10px; }
+
+        h2 { margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 400; letter-spacing: 1px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 30px; text-shadow: 0 0 15px rgba(255, 255, 255, 0.3); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        h2 .title-group { display: flex; align-items: center; gap: 10px; }
+
+        .add-btn {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: var(--glow-color);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            padding: 9px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+        .add-btn:hover {
+            background: rgba(56, 189, 248, 0.22);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+        }
+        .add-btn svg { width: 16px; height: 16px; }
+
         .search-box { position: relative; margin-bottom: 30px; }
         #searchInput { width: 100%; padding: 18px 18px 18px 50px; font-size: 16px; background: rgba(0, 0, 0, 0.2); color: #ffffff; border: 1px solid var(--glass-border); border-radius: 12px; box-sizing: border-box; transition: all 0.3s ease; }
         #searchInput::placeholder { color: var(--text-muted); }
         #searchInput:focus { outline: none; border-color: var(--glow-color); background: rgba(0, 0, 0, 0.4); box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), inset 0 0 10px rgba(56, 189, 248, 0.1); }
         .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); transition: all 0.3s ease; }
         #searchInput:focus + .search-icon, #searchInput:focus ~ .search-icon { color: var(--glow-color); filter: drop-shadow(0 0 5px var(--glow-color)); }
-        
+
         .table-container { max-height: 500px; overflow-y: auto; border-radius: 10px; border: 1px solid var(--glass-border); }
         .table-container::-webkit-scrollbar { width: 8px; }
         .table-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
         .table-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
         .table-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
-        
+
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 16px 20px; border-bottom: 1px solid var(--glass-border); }
         th { background: rgba(255, 255, 255, 0.05); font-weight: 500; color: var(--text-muted); letter-spacing: 0.5px; position: sticky; top: 0; backdrop-filter: blur(10px); }
@@ -91,12 +112,77 @@
         tr:hover { background: rgba(255, 255, 255, 0.08); }
         tr:last-child td { border-bottom: none; }
         td.code-col { font-family: 'Courier New', Courier, monospace; font-size: 16px; color: var(--glow-color); text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); letter-spacing: 1px; }
-        .no-results { text-align: center; padding: 30px; color: var(--text-muted); font-style: italic; display: none; }
+
+        .status-msg { text-align: center; padding: 30px; color: var(--text-muted); font-style: italic; }
+        .status-msg.show { display: block; }
+        .status-msg { display: none; }
+        .status-msg.error { color: #f87171; font-style: normal; }
+        .status-msg .prompt-btn {
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+            background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4);
+            color: var(--glow-color); font-style: normal; font-family: 'Inter', sans-serif;
+            font-size: 0.85rem; font-weight: 600; padding: 9px 18px; border-radius: 10px; cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .status-msg .prompt-btn:hover { background: rgba(56, 189, 248, 0.22); box-shadow: 0 0 14px rgba(56, 189, 248, 0.25); }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 2000;
+            background: rgba(5, 8, 16, 0.65);
+            backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+            padding: 20px; box-sizing: border-box;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            width: 100%; max-width: 460px;
+            background: rgba(15, 20, 34, 0.9);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+        .modal-box h3 { margin: 0 0 6px 0; font-size: 1.15rem; font-weight: 600; color: #fff; }
+        .modal-box .modal-sub { margin: 0 0 22px 0; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+        .field-label { display: block; font-size: 0.75rem; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; margin-top: 16px; text-transform: uppercase; }
+        .field-label:first-of-type { margin-top: 0; }
+        .modal-box input[type="text"] {
+            width: 100%; padding: 12px 14px; font-size: 15px; background: rgba(0,0,0,0.25);
+            color: #fff; border: 1px solid var(--glass-border); border-radius: 10px; box-sizing: border-box;
+            font-family: 'Inter', sans-serif; transition: all 0.25s ease;
+        }
+        .modal-box input#newCode { font-family: 'Courier New', Courier, monospace; letter-spacing: 0.5px; }
+        .modal-box input[type="text"]:focus { outline: none; border-color: var(--glow-color); box-shadow: 0 0 12px rgba(56,189,248,0.2); }
+        .modal-error { color: #f87171; font-size: 0.78rem; margin-top: 10px; min-height: 1em; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .modal-btn { padding: 10px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; font-family: 'Inter', sans-serif; transition: all 0.2s ease; }
+        .modal-btn.cancel { background: transparent; border-color: var(--glass-border); color: var(--text-muted); }
+        .modal-btn.cancel:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+        .modal-btn.save { background: linear-gradient(160deg, #38bdf8, #6C8EBF); color: #08111a; }
+        .modal-btn.save:hover { box-shadow: 0 0 16px rgba(56,189,248,0.4); }
+
+        /* JSON snippet output */
+        .json-output { display: none; margin-top: 18px; }
+        .json-output.show { display: block; }
+        .json-output pre {
+            background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 10px;
+            padding: 14px; font-family: 'Courier New', Courier, monospace; font-size: 13px;
+            color: #a7f3d0; white-space: pre-wrap; word-break: break-word; margin: 0;
+        }
+        .copy-btn {
+            margin-top: 10px; width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(168,85,247,0.4);
+            background: rgba(168,85,247,0.12); color: var(--glow-secondary); font-family: 'Inter', sans-serif;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+        }
+        .copy-btn:hover { background: rgba(168,85,247,0.22); box-shadow: 0 0 14px rgba(168,85,247,0.25); }
+        .copy-btn.copied { border-color: rgba(74,222,128,0.5); color: #4ade80; background: rgba(74,222,128,0.12); }
     </style>
 </head>
 <body>
 
-<!-- Navbar Added -->
+<!-- Navbar -->
 <nav class="top-nav">
     <a href="index.html" class="nav-logo">
         <span class="mark">X</span>
@@ -116,24 +202,30 @@
 
 <div class="search-container">
     <h2>
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--glow-color); filter: drop-shadow(0 0 8px rgba(56,189,248,0.5));">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-        </svg>
-        Head of Account Tracker
+        <span class="title-group">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--glow-color); filter: drop-shadow(0 0 8px rgba(56,189,248,0.5));">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+            Head of Account Tracker
+        </span>
+        <button class="add-btn" onclick="openAddModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add New Code
+        </button>
     </h2>
-    
+
     <div class="search-box">
         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" id="searchInput" onkeyup="searchAccounts()" placeholder="Code emaw Hming (Entirnan: Salary, ORE, ADM) chhut rawh...">
+        <input type="text" id="searchInput" onkeyup="searchAccounts()" placeholder="Code emaw Hming (Entirnan: Salary, ORE, ADM) chhut rawh..." disabled>
     </div>
 
     <div class="table-container">
-        <table>
+        <table id="accountsTable" style="display:none;">
             <thead>
                 <tr>
                     <th width="45%">Account Code</th>
@@ -143,54 +235,100 @@
             <tbody id="tableBody">
             </tbody>
         </table>
-        <div id="noResults" class="no-results">
-            I thil zawn a awm lo...
+        <div id="statusMsg" class="status-msg show">Loading config.json...</div>
+    </div>
+</div>
+
+<!-- Add Code Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+        <h3>Add New Account Code</h3>
+        <p class="modal-sub">This won't save automatically — copy the JSON below and paste it into <code>config.json</code>, inside the <code>"accounts"</code> array.</p>
+
+        <label class="field-label" for="newCode">Account Code</label>
+        <input type="text" id="newCode" placeholder="e.g. 024S221001001020001" autocomplete="off" oninput="updateJsonPreview()">
+
+        <label class="field-label" for="newName">Account Name / Object Head</label>
+        <input type="text" id="newName" placeholder="e.g. ADM|Salary|01" autocomplete="off" oninput="updateJsonPreview()">
+
+        <div class="modal-error" id="modalError"></div>
+
+        <div class="json-output" id="jsonOutput">
+            <label class="field-label" style="margin-top:0;">Paste this into config.json</label>
+            <pre id="jsonPreview"></pre>
+            <button class="copy-btn" id="copyBtn" onclick="copyJson()">Copy JSON</button>
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeAddModal()">Close</button>
+            <button class="modal-btn save" onclick="generateJson()">Generate JSON</button>
         </div>
     </div>
 </div>
 
 <script>
-    const accounts = [
-        { code: "024S221001001010001", name: "Direction|Salary|01" },
-        { code: "024S221001001020001", name: "ADM|Salary|01" },
-        { code: "024S221001001020024", name: "ADM|F&L|24" },
-        { code: "024S221001001020149", name: "ADM|ORE|149" },
-        { code: "024S221001110010001", name: "HOSP|Salary|01" },
-        { code: "024S221001110010049", name: "HOSP|ORE|049" },
-        { code: "024S221001110010149", name: "HOSP|ORE DIET|149" },
-        { code: "024S221003102010001", name: "SHC|Salary|01" },
-        { code: "024S221003102010006", name: "SHC|MT/MTE|06" },
-        { code: "024S221003103010001", name: "PHC|Salary|01" },
-        { code: "024S221003103010006", name: "PHC|MT/MTE|06" },
-        { code: "024S221003103010011", name: "PHC|TE|11" },
-        { code: "024S221003103010049", name: "PHC|ORE|049" },
-        { code: "024S221006101010001", name: "NLCP|Salary|01" },
-        { code: "024S221006101030001", name: "TB|Salary|01" },
-        { code: "024S221006101040001", name: "Control of Epidemic|Salary|01" },
-        { code: "024S221006101080001", name: "NMEP|Salary|01" },
-        { code: "024S221006104010001", name: "Drugs|Salary|01" },
-        { code: "024S221006104010002", name: "Drugs|Wages|02" },
-        { code: "024S221006104040002", name: "Drugs|Wages|02" },
-        { code: "024S221100001020001", name: "ADM CSS|Salary|01" },
-        { code: "024S221100101010001", name: "RFW|Salary|01" },
-        { code: "024S221100103010001", name: "MCH|Salary|01" }
-    ];
+    let accounts = [];
 
     const tableBody = document.getElementById("tableBody");
-    const noResults = document.getElementById("noResults");
+    const statusMsg = document.getElementById("statusMsg");
+    const accountsTable = document.getElementById("accountsTable");
+    const searchInput = document.getElementById("searchInput");
 
-    function displayData(data) {
+    function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function setStatus(text, isError) {
+        statusMsg.innerHTML = "";
+        statusMsg.textContent = text;
+        statusMsg.classList.add("show");
+        statusMsg.classList.toggle("error", !!isError);
+        accountsTable.style.display = "none";
+    }
+
+    function loadConfig() {
+        fetch("config.json", { cache: "no-store" })
+            .then(res => {
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                return res.json();
+            })
+            .then(data => {
+                accounts = Array.isArray(data.accounts) ? data.accounts : [];
+                searchInput.disabled = false;
+                displayData(accounts);
+            })
+            .catch(err => {
+                console.error("Failed to load config.json", err);
+                setStatus(
+                    "Could not load config.json (" + err.message + "). Make sure this page is served over http(s):// and config.json sits alongside head.html.",
+                    true
+                );
+            });
+    }
+
+    function displayData(data, query) {
         tableBody.innerHTML = "";
         if (data.length === 0) {
-            noResults.style.display = "block";
-            document.querySelector("table").style.display = "none";
+            const msg = query
+                ? `I thil zawn a awm lo for "${query}"...`
+                : "No accounts found in config.json.";
+            statusMsg.innerHTML = escapeHtml(msg) +
+                `<div><button class="prompt-btn" onclick="openAddModal(true)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add "${escapeHtml(query || "")}" as a new code
+                </button></div>`;
+            statusMsg.classList.remove("error");
+            statusMsg.classList.add("show");
+            accountsTable.style.display = "none";
         } else {
-            noResults.style.display = "none";
-            document.querySelector("table").style.display = "table";
+            statusMsg.classList.remove("show");
+            accountsTable.style.display = "table";
             data.forEach(item => {
                 let row = `<tr>
-                    <td class="code-col">${item.code}</td>
-                    <td>${item.name}</td>
+                    <td class="code-col">${escapeHtml(item.code)}</td>
+                    <td>${escapeHtml(item.name)}</td>
                 </tr>`;
                 tableBody.innerHTML += row;
             });
@@ -198,12 +336,96 @@
     }
 
     function searchAccounts() {
-        let input = document.getElementById("searchInput").value.toUpperCase();
-        let filteredData = accounts.filter(item => item.code.toUpperCase().includes(input) || item.name.toUpperCase().includes(input));
-        displayData(filteredData);
+        let input = searchInput.value.toUpperCase().trim();
+        let filteredData = accounts.filter(item =>
+            item.code.toUpperCase().includes(input) || item.name.toUpperCase().includes(input)
+        );
+        displayData(filteredData, searchInput.value.trim());
     }
-    
-    displayData(accounts);
+
+    /* --- Add New Code Modal (generates JSON to paste manually into config.json) --- */
+    const modalOverlay = document.getElementById("modalOverlay");
+    const newCodeInput = document.getElementById("newCode");
+    const newNameInput = document.getElementById("newName");
+    const modalError = document.getElementById("modalError");
+    const jsonOutput = document.getElementById("jsonOutput");
+    const jsonPreview = document.getElementById("jsonPreview");
+    const copyBtn = document.getElementById("copyBtn");
+
+    function openAddModal(prefillFromSearch) {
+        modalError.textContent = "";
+        jsonOutput.classList.remove("show");
+        copyBtn.classList.remove("copied");
+        copyBtn.textContent = "Copy JSON";
+        newNameInput.value = "";
+        const searchVal = searchInput.value.trim();
+        newCodeInput.value = prefillFromSearch && searchVal ? searchVal : "";
+        modalOverlay.classList.add("show");
+        setTimeout(() => {
+            if (newCodeInput.value) {
+                newNameInput.focus();
+            } else {
+                newCodeInput.focus();
+            }
+        }, 50);
+    }
+
+    function closeAddModal() {
+        modalOverlay.classList.remove("show");
+    }
+
+    modalOverlay.addEventListener("click", (e) => {
+        if (e.target === modalOverlay) closeAddModal();
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modalOverlay.classList.contains("show")) closeAddModal();
+    });
+
+    function updateJsonPreview() {
+        // Hide stale preview until "Generate JSON" is pressed again
+        jsonOutput.classList.remove("show");
+    }
+
+    function generateJson() {
+        const code = newCodeInput.value.trim();
+        const name = newNameInput.value.trim();
+
+        if (!code || !name) {
+            modalError.textContent = "Both Account Code and Account Name are required.";
+            jsonOutput.classList.remove("show");
+            return;
+        }
+
+        const exists = accounts.some(a => a.code.toUpperCase() === code.toUpperCase());
+        if (exists) {
+            modalError.textContent = "This code already exists in config.json.";
+            jsonOutput.classList.remove("show");
+            return;
+        }
+
+        modalError.textContent = "";
+        const snippet = JSON.stringify({ code, name }, null, 2);
+        jsonPreview.textContent = snippet + ",";
+        jsonOutput.classList.add("show");
+        copyBtn.classList.remove("copied");
+        copyBtn.textContent = "Copy JSON";
+    }
+
+    function copyJson() {
+        const text = jsonPreview.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            copyBtn.classList.add("copied");
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => {
+                copyBtn.classList.remove("copied");
+                copyBtn.textContent = "Copy JSON";
+            }, 1800);
+        }).catch(() => {
+            modalError.textContent = "Couldn't copy automatically — select and copy the text manually.";
+        });
+    }
+
+    loadConfig();
 </script>
 </body>
 </html>
