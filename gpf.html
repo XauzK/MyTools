@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPF Sanction Order - Smart Form</title>
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -29,20 +30,34 @@
             margin-bottom: 20px;
         }
 
-        .btn-print {
-            background-color: #0d6efd;
+        .btn-print, .btn-docx {
             color: white;
             border: none;
             padding: 12px 25px;
             font-size: 16px;
             border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
             transition: all 0.3s ease;
+            margin: 0 5px;
+        }
+
+        .btn-print {
+            background-color: #0d6efd;
+            box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
         }
 
         .btn-print:hover {
             background-color: #0b5ed7;
+            transform: translateY(-2px);
+        }
+
+        .btn-docx {
+            background-color: #198754;
+            box-shadow: 0 4px 6px rgba(25, 135, 84, 0.2);
+        }
+
+        .btn-docx:hover {
+            background-color: #157347;
             transform: translateY(-2px);
         }
 
@@ -198,6 +213,7 @@
 
     <div class="controls">
         <button class="btn-print" onclick="window.print()">🖨️ Print / Save to PDF</button>
+        <button class="btn-docx" onclick="exportGpfToDocx()">📄 Export to Word (.docx)</button>
     </div>
 
     <div class="form-container">
@@ -401,6 +417,148 @@
 
         balanceA.addEventListener('input', calculateTotalBalance);
         balanceB.addEventListener('input', calculateTotalBalance);
+
+        function exportGpfToDocx() {
+            const clone = document.querySelector('.form-container').cloneNode(true);
+            const empName = document.getElementById('empName1').value.trim() || 'Employee';
+
+            // Replace input fields with formatted text
+            clone.querySelectorAll('input').forEach(inp => {
+                const span = document.createElement('span');
+                const val = inp.value.trim();
+                if (inp.classList.contains('header-input')) {
+                    span.innerHTML = `<b>${val}</b>`;
+                } else if (val) {
+                    span.innerHTML = `<u><b>&nbsp;${val}&nbsp;</b></u>`;
+                } else {
+                    span.innerHTML = `<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>`;
+                }
+                inp.parentNode.replaceChild(span, inp);
+            });
+
+            // Replace selects with formatted text
+            clone.querySelectorAll('select').forEach(sel => {
+                const span = document.createElement('span');
+                const val = sel.value.trim() || (sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : '');
+                span.innerHTML = val ? `<u><b>&nbsp;${val}&nbsp;</b></u>` : `<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>`;
+                sel.parentNode.replaceChild(span, sel);
+            });
+
+            const content = `<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset='utf-8'>
+    <title>GPF Sanction Order</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+        @page Section1 {
+            size: 210mm 297mm;
+            margin: 10mm 15mm 10mm 15mm;
+            mso-header-margin: 15pt;
+            mso-footer-margin: 15pt;
+        }
+        div.Section1 { page: Section1; }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10.5pt;
+            line-height: 1.25;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        p {
+            margin-top: 2pt;
+            margin-bottom: 3pt;
+            line-height: 1.25;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .underline { text-decoration: underline; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 4pt;
+            margin-bottom: 4pt;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 3pt 5pt;
+            font-size: 10pt;
+            vertical-align: middle;
+        }
+        .signature-block {
+            margin-top: 8pt;
+            text-align: right;
+        }
+        .sign-space {
+            padding-top: 22pt;
+            display: inline-block;
+            text-align: center;
+        }
+        .sign-space p {
+            margin: 0;
+            line-height: 1.2;
+        }
+        .memo-section {
+            margin-top: 8pt;
+            padding-top: 5pt;
+            border-top: 1px solid #000;
+        }
+        ol {
+            margin-top: 2pt;
+            margin-bottom: 2pt;
+            padding-left: 18pt;
+        }
+        li {
+            margin-bottom: 2pt;
+        }
+    </style>
+</head>
+<body>
+    <div class="Section1">
+        ${clone.innerHTML}
+    </div>
+</body>
+</html>`;
+
+            if (typeof htmlDocx !== 'undefined') {
+                try {
+                    const converted = htmlDocx.asBlob(content, {
+                        orientation: 'portrait',
+                        margins: { top: 567, right: 850, bottom: 567, left: 850 }
+                    });
+                    downloadBlob(converted, 'GPF_Sanction_Order_' + empName + '.docx');
+                    return;
+                } catch (e) {
+                    console.warn('htmlDocx error, falling back to Word document (.doc)', e);
+                }
+            }
+
+            const blob = new Blob(['\ufeff', content], { type: 'application/msword;charset=utf-8' });
+            downloadBlob(blob, 'GPF_Sanction_Order_' + empName + '.doc');
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
     </script>
 </body>
 </html>

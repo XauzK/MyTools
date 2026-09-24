@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LPC Generator Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #e9ecef; display: flex; height: 100vh; }
@@ -38,14 +39,16 @@
         input:focus, select:focus { border-color: #007bff; }
         
         /* Buttons */
-        .button-group { display: flex; gap: 10px; margin-top: 30px; margin-bottom: 20px; padding: 0 5px;}
-        .btn { flex: 1; padding: 12px 5px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; border-radius: 4px; color: white; transition: 0.2s; text-align: center;}
+        .button-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 25px; margin-bottom: 20px; padding: 0 5px;}
+        .btn { flex: 1 1 calc(50% - 6px); padding: 11px 4px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; color: white; transition: 0.2s; text-align: center;}
         .btn-print { background: #28a745; }
         .btn-print:hover { background: #218838; }
         .btn-print-back { background: #17a2b8; }
         .btn-print-back:hover { background: #138496; }
         .btn-pdf { background: #d9534f; }
         .btn-pdf:hover { background: #c9302c; }
+        .btn-docx { background: #007bff; }
+        .btn-docx:hover { background: #0056b3; }
 
         /* A4 Preview Styling */
         #preview-container { 
@@ -111,7 +114,7 @@
         }
     </style>
 </head>
-<body>
+<body class="print-front">
 
     <div class="left-panel">
         <h2>LPC Data Entry Pro</h2>
@@ -119,7 +122,7 @@
         <h3 class="cat-1">1. Employee Details</h3>
         <div class="grid">
             <div class="form-group"><label>Name</label><input type="text" id="name" oninput="calculate()"></div>
-            <div class="form-group"><label>Designation</label><input type="text" id="designation" oninput="calculate()"></div>
+            <div class="form-group"><label>Designation</label><input type="text" id="designation" oninput="onDesigChange()"></div>
             <div class="form-group"><label>Audit No</label><input type="text" id="auditNo" placeholder="Enter Audit No (if any)" oninput="calculate()"></div>
             <div class="form-group">
                 <label>Paid Upto (Month)</label>
@@ -155,6 +158,14 @@
                     <option value="Maint (CSS)">Maint (CSS)</option>
                 </select>
             </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Office / Department Name</label>
+                <input type="text" id="officeName" value="Department of Health & Family Welfare, CMO Aizawl East District." oninput="calculate()">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Proceeding on (Reason / Transfer)</label>
+                <input type="text" id="proceedingOn" placeholder="e.g. Transfer to... / Leave / Superannuation" oninput="calculate()">
+            </div>
         </div>
 
         <h3 class="cat-2">2. Settings & Allowances</h3>
@@ -177,6 +188,9 @@
             <div class="form-group"><label>HRA Percentage (%)</label><input type="number" id="hraPerc" value="9" oninput="calculate()"></div>
             <div class="form-group"><label>SCA (Manual)</label><input type="number" id="sca" value="2700" oninput="calculate()"></div>
             <div class="form-group"><label>PP (Manual)</label><input type="number" id="pp" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>Washing Allowance</label><input type="number" id="wash" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>Uniform Allowance</label><input type="number" id="uniform" value="0" oninput="calculate()"></div>
+            <div class="form-group" style="grid-column: span 2;"><label>Nursing Allowance</label><input type="number" id="nursing" value="0" oninput="calculate()"></div>
         </div>
 
         <h3 class="cat-3">3. Deductions</h3>
@@ -213,6 +227,7 @@
             <button class="btn btn-print" onclick="printFront()">🖨️ Print Front</button>
             <button class="btn btn-print-back" onclick="printBack()">🖨️ Print Back</button>
             <button class="btn btn-pdf" onclick="generatePDF()">💾 Save as PDF</button>
+            <button class="btn btn-docx" onclick="exportToDocx()">📄 Export to Word (.docx)</button>
         </div>
     </div>
 
@@ -231,10 +246,10 @@
                     <td>Desig: <span id="pDesig" class="bold"></span></td>
                 </tr>
                 <tr>
-                    <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;Department of Health & Family Welfare, CMO Aizawl East District.</td>
+                    <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;<span id="pOffice">Department of Health & Family Welfare, CMO Aizawl East District.</span></td>
                 </tr>
                 <tr>
-                    <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;Proceeding on ____________________________________</td>
+                    <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;Proceeding on <span id="pProceeding">____________________________________</span></td>
                 </tr>
                 <tr class="gap-row"><td colspan="3"></td></tr>
                 <tr>
@@ -293,9 +308,9 @@
                 <tr class="gap-row"><td colspan="3"></td></tr>
                 <tr><td colspan="3">1. He/She made over charge of the Office / post of _________________________________</td></tr>
                 <tr><td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;on the forenoon/afternoon of ___________________________________</td></tr>
-                <tr><td colspan="3">2. Recoveries are to be made the pay of the Government Servant detailed on the reverse.</td></tr>
+                <tr><td colspan="3">2. Recoveries are to be made from the pay of the Government Servant detailed on the reverse.</td></tr>
                 <tr><td colspan="3">3. He/She is also entitled to joining time for ________________ days.</td></tr>
-                <tr><td colspan="3">4. He/She has been sanctioned leave proceeding joining time for ___________ days.</td></tr>
+                <tr><td colspan="3">4. He/She has been sanctioned leave preceding joining time for ___________ days.</td></tr>
                 <tr><td colspan="3">5. Details for P.L.I. recovery through Pay Bill.</td></tr>
                 <tr><td colspan="3">6. Details of Income tax recovered up to the date from, the beginning of the current financial year are noted on the reverse.</td></tr>
                 <tr><td colspan="3">7. Service from the period from __________ to ____________ (during his stay in this Office) has been verified. A copy of L.P.C. has been given to the Government Servant.</td></tr>
@@ -314,7 +329,11 @@
         </div>
 
         <div id="backside-container">
-            <img src="backside.png" alt="Backside Image">
+            <img src="backside.png" alt="Backside Image" onerror="this.style.display='none'; document.getElementById('backside-placeholder').style.display='block';">
+            <div id="backside-placeholder" style="display:none; padding: 40px; border: 2px dashed #999; margin: 20px; font-size: 14px; color: #555;">
+                <p><b>Backside Image (backside.png) a awm lo.</b></p>
+                <p>Folder chhungah hian <code>backside.png</code> dah la, a lang thei ang.</p>
+            </div>
         </div>
     </div>
 
@@ -322,29 +341,53 @@
         function val(id) { return parseFloat(document.getElementById(id).value) || 0; }
         function setPrint(id, value) { document.getElementById(id).innerText = value === 0 ? '' : value; }
 
+        function isMedicalStaff(desig) {
+            if (!desig) return false;
+            if (/nursing officer|staff nurse|health worker|health supervisor|nursing superintendent|ward superintendent/i.test(desig)) return true;
+            if (/\b(hw|hs|no|sn|ns|ws)\b/i.test(desig)) return true;
+            return false;
+        }
+
+        function isGroupD(desig) {
+            if (!desig) return false;
+            if (/group\s*d|grade\s*iv|iv\s*grade|driver|peon|chowkidar|sweeper|cook|mali|cleaner|attendant|ayah|ward\s*boy|bearer|water\s*carrier/i.test(desig)) return true;
+            return false;
+        }
+
+        function onDesigChange() {
+            let desig = document.getElementById('designation').value.trim();
+            if (isMedicalStaff(desig)) {
+                document.getElementById('wash').value = 450;
+                document.getElementById('uniform').value = 750;
+                document.getElementById('nursing').value = 4800;
+            } else if (isGroupD(desig)) {
+                document.getElementById('wash').value = 90;
+                document.getElementById('uniform').value = 0;
+                document.getElementById('nursing').value = 0;
+            } else {
+                document.getElementById('wash').value = 0;
+                document.getElementById('uniform').value = 0;
+                document.getElementById('nursing').value = 0;
+            }
+            calculate();
+        }
+
         function calculate() {
             let basic = val('basicPay');
             let isDoc = document.getElementById('isDoc').value === 'Yes';
             let daPerc = val('daPerc');
             let hraEligible = document.getElementById('hraEligible').value === 'Yes';
             let hraPerc = val('hraPerc');
-            let desig = document.getElementById('designation').value.toLowerCase();
+            let desig = document.getElementById('designation').value.trim();
             let pensionType = document.getElementById('pensionType').value;
 
             let npa = isDoc ? Math.round(basic * 0.20) : 0;
             let da = Math.round((basic + npa) * (daPerc / 100)); 
             let hra = hraEligible ? Math.round(basic * (hraPerc / 100)) : 0; 
 
-            let wash = 0, uniform = 0, nursing = 0;
-            
-            const medicalStaff = ['hw', 'hs', 'no', 'sn', 'health worker', 'health supervisor', 'nursing officer', 'staff nurse', 'ns', 'ws', 'nursing superintendent', 'ward superintendent'];
-            const groupD = ['group d', 'iv grade', 'grade iv', 'driver'];
-
-            if (medicalStaff.some(v => desig.includes(v))) {
-                wash = 450; uniform = 750; nursing = 4800;
-            } else if (groupD.some(v => desig.includes(v))) {
-                wash = 90;
-            }
+            let wash = val('wash');
+            let uniform = val('uniform');
+            let nursing = val('nursing');
 
             let sca = val('sca');
             let pp = val('pp');
@@ -353,18 +396,25 @@
             let gpfSub = 0, nps = 0, impoundDa = 0;
 
             if (pensionType === 'NPS') {
-                nps = Math.round((basic + da) * 0.10);
+                nps = Math.round((basic + npa + da) * 0.10);
+                document.getElementById('gpfSub').value = 0;
                 document.getElementById('gpfSub').disabled = true;
                 
+                // If impoundDa was auto-calculated by GPF, reset it to 0
+                if (document.getElementById('impoundDa').dataset.autoGpf === 'true') {
+                    document.getElementById('impoundDa').value = 0;
+                    document.getElementById('impoundDa').dataset.autoGpf = 'false';
+                }
                 document.getElementById('impoundDa').disabled = false;
                 impoundDa = val('impoundDa');
             } else {
-                gpfSub = val('gpfSub');
                 document.getElementById('gpfSub').disabled = false;
+                gpfSub = val('gpfSub');
                 
-                let impoundRate = groupD.some(v => desig.includes(v)) ? 0.15 : 0.20;
-                impoundDa = Math.round(basic * impoundRate);
+                let impoundRate = isGroupD(desig) ? 0.15 : 0.20;
+                impoundDa = Math.round((basic + npa) * impoundRate);
                 document.getElementById('impoundDa').value = impoundDa;
+                document.getElementById('impoundDa').dataset.autoGpf = 'true';
                 document.getElementById('impoundDa').disabled = true; 
             }
 
@@ -388,6 +438,13 @@
             document.getElementById('pYear').innerText = document.getElementById('year').value;
             document.getElementById('pLevel').innerText = document.getElementById('level').value;
             document.getElementById('pPayHead').innerText = document.getElementById('payHeadInput').value;
+
+            // Office and Proceeding on
+            let officeVal = document.getElementById('officeName').value.trim();
+            document.getElementById('pOffice').innerText = officeVal || 'Department of Health & Family Welfare';
+            
+            let procVal = document.getElementById('proceedingOn').value.trim();
+            document.getElementById('pProceeding').innerText = procVal ? procVal : '____________________________________';
 
             document.getElementById('pGpfNpsAcc').innerText = document.getElementById('gpfNpsAcc').value;
             document.getElementById('pBankAcc').innerText = document.getElementById('bankAcc').value;
@@ -419,19 +476,159 @@
 
         function generatePDF() {
             const element = document.getElementById('preview-container');
-            const empName = document.getElementById('name').value || 'Employee';
+            const empName = document.getElementById('name').value.trim() || 'Employee';
+            
+            const prevShadow = element.style.boxShadow;
+            element.style.boxShadow = 'none';
+
             const opt = {
-                margin:       0.3,
+                margin:       0.25,
                 filename:     'LPC_' + empName + '.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
             
-            html2pdf().set(opt).from(element).save();
+            if (typeof html2pdf !== 'undefined') {
+                html2pdf().set(opt).from(element).save().then(() => {
+                    element.style.boxShadow = prevShadow;
+                }).catch(() => {
+                    element.style.boxShadow = prevShadow;
+                });
+            } else {
+                element.style.boxShadow = prevShadow;
+                window.print();
+            }
         }
 
-        window.onload = calculate;
+        function exportToDocx() {
+            const preview = document.getElementById('preview-container');
+            const empName = document.getElementById('name').value.trim() || 'Employee';
+            
+            // Build 1-page Word document HTML with exact sizing and margins
+            const content = `<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset='utf-8'>
+    <title>Last Pay Certificate</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+        @page Section1 {
+            size: 210mm 297mm;
+            margin: 8mm 12mm 8mm 12mm;
+            mso-header-margin: 15pt;
+            mso-footer-margin: 15pt;
+        }
+        div.Section1 { page: Section1; }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 8.5pt;
+            line-height: 1.15;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            font-size: 12pt;
+            margin: 0 0 2pt 0;
+            text-align: center;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        p {
+            margin: 1pt 0;
+            font-size: 8pt;
+            text-align: center;
+        }
+        .lpc-header { text-align: center; margin-bottom: 4pt; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 3pt;
+            margin-bottom: 3pt;
+        }
+        .no-border-table td {
+            border: none;
+            padding: 1pt 2pt;
+            vertical-align: top;
+            font-size: 8.5pt;
+        }
+        .lpc-table th, .lpc-table td {
+            border: 1px solid #000;
+            padding: 2pt 3pt;
+            font-size: 8pt;
+        }
+        .lpc-table th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+        }
+        .bold { font-weight: bold; }
+        .right-align { text-align: right; }
+        .center-align { text-align: center; }
+        .blank-line {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 90px;
+            padding: 0 3px;
+            font-weight: bold;
+        }
+        .blank-line-long { min-width: 160px; }
+        .gap-row { height: 6pt; }
+        .signature-row {
+            padding-top: 25pt;
+            vertical-align: bottom;
+        }
+        .nowrap { white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="Section1">
+        ${preview.innerHTML}
+    </div>
+</body>
+</html>`;
+
+            if (typeof htmlDocx !== 'undefined') {
+                try {
+                    const converted = htmlDocx.asBlob(content, {
+                        orientation: 'portrait',
+                        margins: { top: 450, right: 680, bottom: 450, left: 680 }
+                    });
+                    downloadBlob(converted, 'LPC_' + empName + '.docx');
+                    return;
+                } catch (e) {
+                    console.warn('htmlDocx error, falling back to Word document (.doc)', e);
+                }
+            }
+
+            const blob = new Blob(['\ufeff', content], { type: 'application/msword;charset=utf-8' });
+            downloadBlob(blob, 'LPC_' + empName + '.doc');
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        window.onload = function() {
+            onDesigChange();
+            calculate();
+        };
     </script>
 </body>
 </html>
