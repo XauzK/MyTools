@@ -314,6 +314,14 @@
           <div class="field"><label>Invoice No.</label><input id="invNo" oninput="update()"></div>
           <div class="field"><label>Invoice Date</label><input type="date" id="invDate" oninput="update()"></div>
         </div>
+        <div class="field">
+          <label>Document Type</label>
+          <select id="documentType" onchange="update()">
+            <option value="tax">Tax Invoice</option>
+            <option value="bill">Bill of Supply</option>
+          </select>
+          <p class="hint" style="margin:6px 0 0;">Choose Bill of Supply for exempt, nil-rated or other supplies where GST is not charged.</p>
+        </div>
         <div class="row2">
           <div class="field"><label>Place of Supply</label><input id="placeSupply" placeholder="e.g. Mizoram" oninput="update()"></div>
           <div class="field">
@@ -629,47 +637,83 @@ function update(){
   const shopName = g('shopName') || 'Your Company Name';
   updateSettingsSummary(shopName);
 
+  const documentType = document.getElementById('documentType').value;
+  const isBillOfSupply = documentType === 'bill';
   let itemsHtml = '';
   let totalQty=0, totalRateSum=0, totalTaxable=0, totalGst=0;
   items.forEach((it, idx) => {
     const {taxable, gstAmt, tr} = splitTax(it.qty, it.rate, it.gst);
-    totalQty += it.qty; totalRateSum += tr; totalTaxable += taxable; totalGst += gstAmt;
-    itemsHtml += `<tr>
-      <td>${idx+1}</td>
-      <td class="l">${esc(it.name)}</td>
-      <td>${esc(it.hsn) || '—'}</td>
-      <td>${fmtG(it.qty)}</td>
-      <td>${esc(it.unit) || '—'}</td>
-      <td class="r">${fmt2(it.rate)}</td>
-      <td class="r">${fmt2(tr)}</td>
-      <td class="r">${fmt2(taxable)}</td>
-      <td>${it.gst > 0 ? fmtG(it.gst)+'%' : 'NIL'}</td>
-      <td class="r">${fmt2(gstAmt)}</td>
-    </tr>`;
+    totalQty += it.qty;
+    totalRateSum += tr;
+    if (isBillOfSupply) {
+      // Bill of Supply: the entered line rate is the full value; no GST is charged.
+      totalTaxable += tr;
+      itemsHtml += `<tr>
+        <td>${idx+1}</td>
+        <td class="l">${esc(it.name)}</td>
+        <td>${esc(it.hsn) || '—'}</td>
+        <td>${fmtG(it.qty)}</td>
+        <td>${esc(it.unit) || '—'}</td>
+        <td class="r">${fmt2(it.rate)}</td>
+        <td class="r">${fmt2(tr)}</td>
+      </tr>`;
+    } else {
+      totalTaxable += taxable;
+      totalGst += gstAmt;
+      itemsHtml += `<tr>
+        <td>${idx+1}</td>
+        <td class="l">${esc(it.name)}</td>
+        <td>${esc(it.hsn) || '—'}</td>
+        <td>${fmtG(it.qty)}</td>
+        <td>${esc(it.unit) || '—'}</td>
+        <td class="r">${fmt2(it.rate)}</td>
+        <td class="r">${fmt2(tr)}</td>
+        <td class="r">${fmt2(taxable)}</td>
+        <td>${it.gst > 0 ? fmtG(it.gst)+'%' : 'NIL'}</td>
+        <td class="r">${fmt2(gstAmt)}</td>
+      </tr>`;
+    }
   });
   if (items.length){
-    itemsHtml += `<tr class="subtotal">
-      <td colspan="3" class="l">Sub-Total</td>
-      <td>${fmtG(totalQty)}</td><td></td><td></td>
-      <td class="r">${fmt2(totalRateSum)}</td>
-      <td class="r">${fmt2(totalTaxable)}</td>
-      <td></td>
-      <td class="r">${fmt2(totalGst)}</td>
-    </tr>`;
+    itemsHtml += isBillOfSupply
+      ? `<tr class="subtotal">
+          <td colspan="3" class="l">Sub-Total</td>
+          <td>${fmtG(totalQty)}</td><td></td><td></td>
+          <td class="r">${fmt2(totalRateSum)}</td>
+        </tr>`
+      : `<tr class="subtotal">
+          <td colspan="3" class="l">Sub-Total</td>
+          <td>${fmtG(totalQty)}</td><td></td><td></td>
+          <td class="r">${fmt2(totalRateSum)}</td>
+          <td class="r">${fmt2(totalTaxable)}</td>
+          <td></td>
+          <td class="r">${fmt2(totalGst)}</td>
+        </tr>`;
   } else {
-    itemsHtml = `<tr><td colspan="10" style="color:var(--muted);padding:16px;">No items added yet</td></tr>`;
+    itemsHtml = `<tr><td colspan="${isBillOfSupply ? 7 : 10}" style="color:var(--muted);padding:16px;">No items added yet</td></tr>`;
   }
 
-  const rawGrandTotal = totalTaxable + totalGst;
+  const rawGrandTotal = isBillOfSupply ? totalRateSum : totalTaxable + totalGst;
   const roundedGrandTotal = Math.round(rawGrandTotal);
   const roundOff = roundedGrandTotal - rawGrandTotal;
   const amtWords = numberToWords(roundedGrandTotal);
 
   const isInter = segValue('segSupply', ['intra','inter']) === 'inter';
-  const taxRowsHtml = isInter
+  const taxRowsHtml = isBillOfSupply ? '' : (isInter
     ? `<tr><td class="k">Total IGST</td><td class="v">₹${fmt2(totalGst)}</td></tr>`
     : `<tr><td class="k">Total CGST</td><td class="v">₹${fmt2(totalGst/2)}</td></tr>
-       <tr><td class="k">Total SGST</td><td class="v">₹${fmt2(totalGst/2)}</td></tr>`;
+       <tr><td class="k">Total SGST</td><td class="v">₹${fmt2(totalGst/2)}</td></tr>`);
+
+  const documentTitle = isBillOfSupply ? 'Bill of Supply' : 'Tax Invoice';
+  const documentSub = isBillOfSupply
+    ? 'As per Rule 49 of the CGST Rules, 2017'
+    : 'As per Rule 46 of the CGST Rules, 2017';
+  const tableHeadHtml = isBillOfSupply
+    ? `<th style="width:5%">Sl.</th><th style="width:27%">Product</th><th style="width:12%">HSN</th>
+       <th style="width:8%">Qty</th><th style="width:10%">Unit</th><th style="width:16%">Rate</th><th style="width:22%">Total Value</th>`
+    : `<th style="width:4%">Sl.</th><th style="width:19%">Product</th><th style="width:8%">HSN</th>
+       <th style="width:5%">Qty</th><th style="width:6%">Unit</th><th style="width:9%">Rate</th><th style="width:9%">Total</th>
+       <th style="width:12%">Taxable</th><th style="width:5%">GST%</th><th style="width:12%">GST Amt</th>`;
 
   const copyType = document.getElementById('copyType').value;
   const reverseCharge = segValue('segReverse', ['No','Yes']);
@@ -690,12 +734,12 @@ function update(){
         ${brandMark}
         <div>
           <h1>${esc(shopName)}</h1>
-          <p class="sub">GST Tax Invoice</p>
+          <p class="sub">${documentTitle}</p>
         </div>
       </div>
       <div class="masthead-right">
-        <div class="doc-title">Tax Invoice</div>
-        <div class="doc-sub">As per Rule 46 of the CGST Rules, 2017</div>
+        <div class="doc-title">${documentTitle}</div>
+        <div class="doc-sub">${documentSub}</div>
       </div>
     </div>
 
@@ -709,7 +753,7 @@ function update(){
         <tr><td class="k">Invoice No.</td><td><b>${esc(g('invNo'))}</b></td></tr>
         <tr><td class="k">Invoice Date</td><td>${esc(invDate)}</td></tr>
         <tr><td class="k">Place of Supply</td><td>${esc(g('placeSupply')) || '—'}</td></tr>
-        <tr><td class="k">Reverse Charge</td><td>${esc(reverseCharge)}</td></tr>
+        ${isBillOfSupply ? '' : `<tr><td class="k">Reverse Charge</td><td>${esc(reverseCharge)}</td></tr>`}
       </table>
     </div>
 
@@ -737,11 +781,7 @@ function update(){
     </div>
 
     <table class="items">
-      <thead><tr>
-        <th style="width:4%">Sl.</th><th style="width:19%">Product</th><th style="width:8%">HSN</th>
-        <th style="width:5%">Qty</th><th style="width:6%">Unit</th><th style="width:9%">Rate</th><th style="width:9%">Total</th>
-        <th style="width:12%">Taxable</th><th style="width:5%">GST%</th><th style="width:12%">GST Amt</th>
-      </tr></thead>
+      <thead><tr>${tableHeadHtml}</tr></thead>
       <tbody>${itemsHtml}</tbody>
     </table>
 
@@ -755,7 +795,7 @@ function update(){
       </div>
       <div class="totals">
         <table>
-          <tr><td class="k">Taxable Value</td><td class="v">₹${fmt2(totalTaxable)}</td></tr>
+          <tr><td class="k">${isBillOfSupply ? 'Total Value' : 'Taxable Value'}</td><td class="v">₹${fmt2(totalTaxable)}</td></tr>
           ${taxRowsHtml}
           <tr><td class="k">Round Off</td><td class="v">${roundOff >= 0 ? '+' : ''}${roundOff.toFixed(2)}</td></tr>
           <tr class="grand"><td>Grand Total</td><td class="v">₹${fmt2(roundedGrandTotal)}</td></tr>
@@ -763,7 +803,9 @@ function update(){
       </div>
     </div>
 
-    <div class="declaration">Certified that the particulars given above are true and correct and the amount indicated represents the price actually charged, and that there is no flow of additional consideration directly or indirectly from the buyer.</div>
+    <div class="declaration">${isBillOfSupply
+      ? 'Certified that the particulars given above are true and correct. GST has not been charged on the supplies listed in this Bill of Supply.'
+      : 'Certified that the particulars given above are true and correct and the amount indicated represents the price actually charged, and that there is no flow of additional consideration directly or indirectly from the buyer.'}</div>
 
     <div class="foot">
       <div class="amount-words">Amount in words: <b>${esc(amtWords)}</b></div>
@@ -779,13 +821,15 @@ function update(){
 
   document.getElementById('sumCount').textContent = `${items.length} item${items.length!==1?'s':''}`;
   document.getElementById('sumTaxable').textContent = `₹${fmt2(totalTaxable)}`;
-  document.getElementById('sumGst').textContent = `₹${fmt2(totalGst)}`;
+  document.getElementById('sumGst').textContent = `₹${fmt2(isBillOfSupply ? 0 : totalGst)}`;
+  document.getElementById('sumTaxable').parentElement.firstChild.textContent =
+    isBillOfSupply ? 'Total Value ' : 'Taxable ';
 
   saveSettings();
 }
 
 /* ---------------- persistence (shop/bank defaults only — remembered per browser) ---------------- */
-const PERSIST_IDS = ['shopName','shopAddr','shopPhone','shopGst','placeSupply','bankName','bankAc','bankIfsc','payMode'];
+const PERSIST_IDS = ['shopName','shopAddr','shopPhone','shopGst','placeSupply','bankName','bankAc','bankIfsc','payMode','documentType'];
 function saveSettings(){
   const data = {};
   PERSIST_IDS.forEach(id => data[id] = document.getElementById(id).value);
@@ -812,8 +856,9 @@ function downloadHtml(){
   const sheetHtml = document.getElementById('sheet').outerHTML;
   const styles = document.querySelector('style').outerHTML;
   const invNo = document.getElementById('invNo').value || 'invoice';
+  const docTitle = document.getElementById('documentType').value === 'bill' ? 'Bill of Supply' : 'Tax Invoice';
   const full = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<title>Tax Invoice — ${esc(invNo)}</title>${styles}
+<title>${docTitle} — ${esc(invNo)}</title>${styles}
 <style>body{background:#E9ECF2;padding:24px;} .sheet{margin:0 auto;} .print-btn{position:fixed;bottom:28px;right:28px;background:var(--navy);color:#fff;border:none;border-radius:30px;padding:13px 24px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(20,41,67,.35);font-family:'Segoe UI',Arial,sans-serif;} @media print{.print-btn{display:none;}}</style>
 </head><body>${sheetHtml}<button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button></body></html>`;
   const blob = new Blob([full], {type:'text/html'});
